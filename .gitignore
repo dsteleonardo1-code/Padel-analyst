@@ -1,0 +1,17 @@
+node_modules
+.next
+out
+.venv
+__pycache__
+.pytest_cache
+.mypy_cache
+*.pyc
+.DS_Store
+apps/web/tsconfig.tsbuildinfo
+data
+*.sqlite
+*.sqlite3
+test_api.sqlite
+.pytest_tmp
+apps/api/.coverage
+htmlcov

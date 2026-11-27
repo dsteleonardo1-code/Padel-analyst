@@ -6,7 +6,15 @@ La versione pubblica è una PWA. I video analizzati nel browser restano sul tele
 
 ## Link pubblico
 
+Il sito statico è pronto per GitHub Pages (gratis, piano pubblico):
+
 https://dsteleonardo1-code.github.io/Padel-analyst/
+
+Quel link risponde solo dopo aver acceso Pages una volta, perché l'automazione non ha il permesso di farlo da sola:
+
+1. Apri https://github.com/dsteleonardo1-code/Padel-analyst/settings/pages
+2. In **Build and deployment** scegli **GitHub Actions**
+3. Al push successivo (o rilanciando il workflow CI) il sito viene pubblicato. Non servono servizi a pagamento.
 
 ## Provarla
 
@@ -43,3 +51,5 @@ cd apps/api && pip install -r requirements.txt && PYTHONPATH=. pytest && PYTHONP
 Il sito statico va su **GitHub Pages** del repository pubblico, piano gratuito. Il workflow `.github/workflows/ci.yml` fa lint, test e deploy a ogni push su `main`. Nessun servizio a pagamento.
 
 Base path del sito di progetto: `/Padel-analyst`.
+
+Per aprire subito la pull request: https://github.com/dsteleonardo1-code/Padel-analyst/pull/new/cursor/fondocampo-padel-tennis-7196

@@ -5,7 +5,8 @@ import { clipWindow, exampleImpact } from "./clips";
 import { buildExampleData } from "./examples";
 import { judgeOutcome } from "./outcome";
 import { decodeShare, encodeShare } from "./share";
-import { deltaTone, gifted, percentChange, playerShots, serveStats, skillSnapshots, summarize } from "./stats";
+import { deltaTone, gifted, isOnProfile, percentChange, playerShots, serveStats, skillSnapshots, summarize } from "./stats";
+import { readPlayerCue } from "./who";
 import { mergeWithExamples, parseState } from "./storage";
 import type { EnergySample as Sample } from "./analyze";
 import type { AppState } from "./types";
@@ -122,6 +123,13 @@ describe("corrections and deltas", () => {
     expect(clipWindow(1, 100).start).toBe(0);
     expect(clipWindow(99, 100).end).toBe(100);
     expect(exampleImpact(0, 4, 20)).toBeLessThan(exampleImpact(3, 4, 20));
+  });
+
+  it("keeps example sheets off the profile until saved", () => {
+    const data = buildExampleData();
+    expect(data.matches.every((match) => !isOnProfile(match))).toBe(true);
+    expect(isOnProfile({ ...data.matches[0], saved: true })).toBe(true);
+    expect(readPlayerCue("quello con maglia rossa, lato sinistro, in basso").side).toBe("left");
   });
 
   it("turns errors into points and games", () => {

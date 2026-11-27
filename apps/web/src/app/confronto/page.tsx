@@ -3,15 +3,18 @@
 import { useMemo, useState } from "react";
 import { formatDate } from "@/lib/format";
 import { shotLabel } from "@/lib/i18n";
-import { gifted, playerShots, summarize } from "@/lib/stats";
+import { gifted, isOnProfile, playerShots, summarize } from "@/lib/stats";
 import { useStore } from "@/components/Store";
 import { Card, ExampleMark, Select } from "@/components/ui";
 
 export default function ComparePage() {
   const { state } = useStore();
-  const [playerId, setPlayerId] = useState("p-luca");
+  const savedPlayers = state.players.filter((player) =>
+    state.matches.some((match) => isOnProfile(match) && (match.focusPlayerId === player.id || state.shots.some((shot) => shot.matchId === match.id && shot.playerId === player.id))),
+  );
+  const [playerId, setPlayerId] = useState(savedPlayers[0]?.id ?? "");
   const matches = state.matches
-    .filter((match) => match.focusPlayerId === playerId || state.shots.some((shot) => shot.matchId === match.id && shot.playerId === playerId))
+    .filter((match) => isOnProfile(match) && (match.focusPlayerId === playerId || state.shots.some((shot) => shot.matchId === match.id && shot.playerId === playerId)))
     .sort((a, b) => a.date.localeCompare(b.date));
   const [leftId, setLeftId] = useState(matches[0]?.id ?? "");
   const [rightId, setRightId] = useState(matches[matches.length - 1]?.id ?? "");
@@ -33,7 +36,7 @@ export default function ComparePage() {
           setLeftId("");
           setRightId("");
         }}>
-          {state.players.map((player) => (
+          {savedPlayers.map((player) => (
             <option key={player.id} value={player.id}>{player.name}{player.example ? " (ESEMPIO)" : ""}</option>
           ))}
         </Select>

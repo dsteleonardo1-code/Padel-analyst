@@ -14,6 +14,7 @@ interface StoreApi {
   updateShot: (shot: Shot) => void;
   setFocus: (matchId: string, playerId: string) => void;
   deleteMatch: (id: string) => void;
+  saveToProfile: (matchId: string) => void;
   restoreExamples: () => void;
   setApiBaseUrl: (url: string) => void;
   updateJob: (job: AnalysisJob) => void;
@@ -76,10 +77,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         ...current,
         matches: current.matches.map((match) => (match.id === matchId ? { ...match, focusPlayerId: playerId } : match)),
       })),
+    saveToProfile: (matchId) =>
+      setState((current) => ({
+        ...current,
+        matches: current.matches.map((match) => (match.id === matchId ? { ...match, saved: true } : match)),
+      })),
     deleteMatch: (id) =>
       setState((current) => {
         const match = current.matches.find((item) => item.id === id);
-        if (!match || match.example) return current;
+        if (!match || (match.example && !match.saved)) return current;
         return {
           ...current,
           matches: current.matches.filter((item) => item.id !== id),

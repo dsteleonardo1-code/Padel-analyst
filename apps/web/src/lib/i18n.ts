@@ -19,7 +19,7 @@ export const it = {
   installIos: "Su iPhone: condividi in Safari e scegli «Aggiungi a Home».",
   installAndroid: "Puoi installare Fondocampo e aprirlo a schermo intero.",
   nav: {
-    home: "Partite",
+    home: "Carica",
     analyze: "Analisi",
     players: "Giocatori",
     compare: "Confronta",

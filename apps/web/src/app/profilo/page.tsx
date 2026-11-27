@@ -1,73 +1,86 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { uid } from "@/lib/format";
-import { it } from "@/lib/i18n";
+import { TrendCharts } from "@/components/TrendCharts";
 import { useStore } from "@/components/Store";
-import { Banner, Button, Card, TextField } from "@/components/ui";
+import { Banner, Button, ExampleMark, Fold, TextField } from "@/components/ui";
+import { formatDate, uid } from "@/lib/format";
+import { it } from "@/lib/i18n";
+import { gifted, isOnProfile, playerShots, summarize } from "@/lib/stats";
 
 export default function ProfilePage() {
   const { state, setProfile, setApiBaseUrl, restoreExamples } = useStore();
   const [name, setName] = useState(state.profile?.name ?? "");
   const [email, setEmail] = useState(state.profile?.email ?? "");
-  const [role, setRole] = useState<"player" | "coach">(state.profile?.role ?? "player");
   const [api, setApi] = useState(state.apiBaseUrl);
-  const [saved, setSaved] = useState("");
+  const [note, setNote] = useState("");
+  const saved = state.matches.filter(isOnProfile).sort((a, b) => a.date.localeCompare(b.date));
+  const rows = saved.map((match) => {
+    const summary = summarize(playerShots(state.shots, match.focusPlayerId, match.id));
+    return { match, summary, label: formatDate(match.date).slice(0, 5) };
+  });
 
   return (
     <div className="space-y-4 py-4">
       <header>
-        <h1 className="font-display text-3xl font-bold">Profilo</h1>
-        <p className="text-sm text-mute">Giocatore o allenatore. I dati restano su questo telefono.</p>
+        <h1 className="font-display text-4xl font-extrabold leading-none">{state.profile?.name || "Il mio profilo"}</h1>
+        <p className="mt-1 text-sm text-mute">Solo le schede che salvi.</p>
       </header>
-      <Card>
+
+      {rows.length === 0 ? (
+        <p className="rounded-3xl border border-white/10 bg-pine px-4 py-8 text-center text-sm text-mute">Nessuna scheda salvata.</p>
+      ) : (
+        <>
+          <TrendCharts
+            rows={rows.map((row) => ({
+              label: row.label,
+              free: row.summary.unforced,
+              errors: row.summary.forced,
+              winners: row.summary.winners,
+              games: gifted(row.summary.unforced, row.summary.forced).games,
+            }))}
+          />
+          <ul className="space-y-2">
+            {[...rows].reverse().map((row) => (
+              <li key={row.match.id}>
+                <Link href={`/partita/?id=${row.match.id}`} className="block rounded-3xl border border-white/10 bg-card p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-mute">{formatDate(row.match.date)}</span>
+                    {row.match.example && <ExampleMark />}
+                  </div>
+                  <p className="mt-1 font-display text-2xl font-bold">
+                    {row.summary.unforced} · {row.summary.forced} · {row.summary.winners}
+                  </p>
+                  <p className="text-xs text-mute">{gifted(row.summary.unforced, row.summary.forced).line}</p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      <Fold title="Account">
         <div className="space-y-3">
           <TextField label="Nome" value={name} onChange={setName} />
           <TextField label="Email" value={email} onChange={setEmail} type="email" />
-          <div className="grid grid-cols-2 gap-2">
-            <Button type="button" variant={role === "player" ? "primary" : "ghost"} onClick={() => setRole("player")}>Giocatore</Button>
-            <Button type="button" variant={role === "coach" ? "primary" : "ghost"} onClick={() => setRole("coach")}>Allenatore</Button>
-          </div>
           <Button
             type="button"
             onClick={() => {
-              if (name.trim().length < 2 || !email.includes("@")) {
-                setSaved("Servono un nome e una email.");
-                return;
-              }
-              setProfile({ id: state.profile?.id ?? uid("u"), name: name.trim(), email: email.trim(), role });
-              setSaved("Profilo salvato su questo telefono.");
+              if (name.trim().length < 2) return;
+              setProfile({ id: state.profile?.id ?? uid("u"), name: name.trim(), email: email.trim() || "io@telefono.local", role: state.profile?.role ?? "player" });
+              setNote("Nome aggiornato.");
             }}
           >
-            Salva profilo
+            Salva nome
           </Button>
+          <TextField label="API locale" value={api} onChange={setApi} placeholder="http://192.168.0.10:8000" />
+          <Button type="button" variant="ghost" onClick={() => { setApiBaseUrl(api.trim()); setNote("API salvata."); }}>Salva API</Button>
+          <Button type="button" variant="ghost" onClick={() => { restoreExamples(); setNote("Esempi ripristinati."); }}>Ripristina esempi</Button>
+          <p className="text-xs text-mute">{it.installIos}</p>
         </div>
-      </Card>
-      <Card>
-        <h2 className="font-display text-xl font-bold">Analisi in locale</h2>
-        <p className="mt-1 text-sm text-mute">
-          Opzionale. Se avvii Fondocampo con Docker sul computer, incolla qui l&apos;indirizzo dell&apos;API, per esempio http://192.168.1.20:8000. Dal telefono, stessa rete Wi‑Fi.
-        </p>
-        <div className="mt-3 space-y-3">
-          <TextField label="URL API" value={api} onChange={setApi} placeholder="http://192.168.0.10:8000" />
-          <Button type="button" variant="sand" onClick={() => { setApiBaseUrl(api.trim()); setSaved("Indirizzo locale salvato."); }}>
-            Salva indirizzo
-          </Button>
-        </div>
-      </Card>
-      <Card>
-        <h2 className="font-display text-xl font-bold">Sul telefono</h2>
-        <p className="mt-1 text-sm text-mute">{it.installIos} Su Android puoi usare «Installa app» se il browser lo propone.</p>
-        <p className="mt-2 text-sm text-mute">{it.privacy}</p>
-      </Card>
-      <Card>
-        <h2 className="font-display text-xl font-bold">Dati di esempio</h2>
-        <p className="mt-1 text-sm text-mute">Se hai corretto una partita ESEMPIO e vuoi tornare ai numeri originali, ripristina. Le tue partite restano.</p>
-        <Button type="button" variant="ghost" className="mt-3" onClick={() => { restoreExamples(); setSaved("Esempi ripristinati."); }}>
-          Ripristina gli esempi
-        </Button>
-      </Card>
-      {saved && <Banner>{saved}</Banner>}
+      </Fold>
+      {note && <Banner>{note}</Banner>}
     </div>
   );
 }

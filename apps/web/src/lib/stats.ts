@@ -26,6 +26,12 @@ export interface PlayerSummary {
   byCause: Array<{ cause: ErrorCause; count: number }>;
 }
 
+export function isOnProfile(match: Match): boolean {
+  if (match.saved === true) return true;
+  if (match.saved === false) return false;
+  return !match.example;
+}
+
 export function isError(outcome: Shot["outcome"]): boolean {
   return outcome === "unforced_error" || outcome === "forced_error";
 }

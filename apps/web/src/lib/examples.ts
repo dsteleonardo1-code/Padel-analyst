@@ -1,3 +1,4 @@
+import { uid } from "./format";
 import { EXAMPLE_OBSERVATION } from "./types";
 import type {
   BodySide,
@@ -475,6 +476,66 @@ export const examplePlayers: Player[] = [
     example: true,
   },
 ];
+
+export function sheetFromExample(sport: Sport, label: string, side: CourtSide | null): {
+  player: Player;
+  match: Match;
+  rallies: Rally[];
+  shots: Shot[];
+} {
+  const data = buildExampleData();
+  const sourceId = sport === "padel" ? "m-luca-3" : "m-marco-2";
+  const source = data.matches.find((match) => match.id === sourceId);
+  if (!source) throw new Error("Esempio mancante");
+  const matchId = uid("m");
+  const playerId = uid("p");
+  const rallyIds = new Map<string, string>();
+  const rallies = data.rallies
+    .filter((rally) => rally.matchId === sourceId)
+    .map((rally) => {
+      const id = `${matchId}-r${rally.number}`;
+      rallyIds.set(rally.id, id);
+      return { ...rally, id, matchId };
+    });
+  const shots = data.shots
+    .filter((shot) => shot.matchId === sourceId && shot.playerId === source.focusPlayerId)
+    .map((shot) => ({
+      ...shot,
+      id: `${matchId}-${shot.id}`,
+      matchId,
+      rallyId: rallyIds.get(shot.rallyId) ?? shot.rallyId,
+      playerId,
+      example: true,
+    }));
+  const player: Player = {
+    id: playerId,
+    name: label.trim() || "Giocatore indicato",
+    sport,
+    hand: "right",
+    side,
+    level: "intermediate",
+    partnerName: "",
+    playStyle: sport === "padel" ? "doubles" : "singles",
+    backhand: sport === "tennis" ? "two" : null,
+    ownerId: "local",
+    example: true,
+  };
+  const match: Match = {
+    ...source,
+    id: matchId,
+    place: "Video di esempio",
+    opponents: "",
+    partner: "",
+    focusPlayerId: playerId,
+    side,
+    ownerId: "local",
+    example: true,
+    saved: false,
+    limitNote: label.trim(),
+    confidenceNote: "ESEMPIO. Scheda sul video gratuito, non è una tua partita.",
+  };
+  return { player, match, rallies, shots };
+}
 
 export function buildExampleData(): { players: Player[]; matches: Match[]; rallies: Rally[]; shots: Shot[] } {
   const built = [luca1, luca2, luca3, marco1, marco2].map(materialize);

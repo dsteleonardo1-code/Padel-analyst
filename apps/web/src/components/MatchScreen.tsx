@@ -13,7 +13,7 @@ import { Button } from "./ui";
 export function MatchScreen() {
   const params = useSearchParams();
   const id = params.get("id") ?? "";
-  const { state, updateShot, setFocus, deleteMatch } = useStore();
+  const { state, updateShot, setFocus, deleteMatch, saveToProfile } = useStore();
   const match = state.matches.find((item) => item.id === id);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
@@ -54,6 +54,7 @@ export function MatchScreen() {
         videoUrl={match.example ? demoVideo(match.sport).src : videoUrl}
         onCorrect={updateShot}
         onFocus={(playerId) => setFocus(match.id, playerId)}
+        onSaveToProfile={() => saveToProfile(match.id)}
       />
       {!match.example && (
         <Button

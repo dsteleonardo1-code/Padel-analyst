@@ -26,6 +26,7 @@ export function ReportView({
   readOnly = false,
   onCorrect,
   onFocus,
+  onSaveToProfile,
   videoUrl = null,
 }: {
   match: Match;
@@ -35,6 +36,7 @@ export function ReportView({
   readOnly?: boolean;
   onCorrect?: (shot: Shot) => void;
   onFocus?: (playerId: string) => void;
+  onSaveToProfile?: () => void;
   videoUrl?: string | null;
 }) {
   const focusId = match.focusPlayerId;
@@ -122,6 +124,10 @@ export function ReportView({
       {notice && <Banner tone="sand">{notice}</Banner>}
 
       <ScoreTrio unforced={summary.unforced} forced={summary.forced} winners={summary.winners} />
+      {!readOnly && onSaveToProfile && !match.saved && (
+        <Button type="button" className="w-full" onClick={onSaveToProfile}>Salva nel mio profilo</Button>
+      )}
+      {match.saved && <p className="text-center text-sm text-lime">Nel tuo profilo</p>}
       <ClipRail shots={mine} videoUrl={playback} example={match.example} />
 
       {others.length > 1 && onFocus && (

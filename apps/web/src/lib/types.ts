@@ -92,6 +92,8 @@ export interface Match {
   focusPlayerId: string;
   side: CourtSide | null;
   example: boolean;
+  /** True only after the user saves the sheet onto their own profile. */
+  saved?: boolean;
   source: AnalysisSource;
   durationSec: number;
   confidenceNote: string;

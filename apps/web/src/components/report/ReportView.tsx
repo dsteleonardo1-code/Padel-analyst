@@ -1,9 +1,9 @@
 "use client";
 
-import { Pencil, Share2 } from "lucide-react";
+import { ImageDown, Pencil, Share2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { buildAdvice } from "@/lib/advice";
-import { buildTaggedShot, placeZone, previousSheet, sheetDelta, shotName, summarizeMatch, topPriorities } from "@/lib/analyst";
+import { buildTaggedShot, matchRating, placeZone, previousSheet, sheetDelta, shotName, summarizeMatch, topPriorities } from "@/lib/analyst";
 import { demoVideo } from "@/lib/demo";
 import { downloadText, shotsToCsv } from "@/lib/csv";
 import { appPath, cx, formatPct, formatTime, uid } from "@/lib/format";
@@ -16,6 +16,7 @@ import { Banner, Button, ExampleMark, Fold, Select, SourceMark } from "../ui";
 import { AnalystBoard } from "./AnalystBoard";
 import { ClipRail } from "./ClipRail";
 import { CourtMap } from "./CourtMap";
+import { ShotTimeline } from "./ShotTimeline";
 import { TagBar } from "./TagBar";
 import { VideoStage } from "./VideoStage";
 
@@ -64,6 +65,7 @@ export function ReportView({
   const prior = previousSheet(history, match);
   const delta = prior ? sheetDelta(summary, summarizeMatch(shots, prior.focusPlayerId, prior.id)) : null;
   const priorities = topPriorities(mine, focusId);
+  const rating = matchRating(mine);
   const seekRef = useState<{ fn: (time: number) => void }>({ fn: () => undefined })[0];
   const playback = videoUrl || (match.example ? demoVideo(match.sport).src : null);
 
@@ -126,6 +128,7 @@ export function ReportView({
         onPrev={() => stepRally(-1)}
         onNext={() => stepRally(1)}
       />
+      <ShotTimeline shots={mine} duration={match.durationSec} time={clock} onSeek={jump} />
       {!readOnly && onTag && (
         <TagBar
           time={clock}
@@ -158,8 +161,12 @@ export function ReportView({
       )}
       <header className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl font-bold leading-none">{player?.name ?? "Giocatore"}</h1>
+          <h1 className="font-display text-4xl font-extrabold leading-none tracking-tight">{player?.name ?? "Giocatore"}</h1>
           <p className="mt-1 text-sm text-mute">{match.score || sportLabel[match.sport]}</p>
+          <p className="mt-2 text-sm">
+            <span className="font-display text-3xl font-extrabold text-lime">{rating ? rating.score : "—"}</span>
+            <span className="ml-2 text-mute">{rating ? rating.line : "Indice dopo 4 colpi classificati."}</span>
+          </p>
           {match.limitNote && <p className="mt-2 text-xs leading-relaxed text-mute">{match.limitNote}</p>}
           {match.source !== "example" && <p className="mt-1 text-xs text-clay">{match.confidenceNote}</p>}
         </div>
@@ -301,7 +308,7 @@ export function ReportView({
             key={id}
             type="button"
             onClick={() => setFilter(id)}
-            className={cx("min-h-11 shrink-0 rounded-full px-3 text-sm", filter === id ? "bg-lime font-semibold text-ink" : "bg-white/5")}
+            className={cx("chip shrink-0", filter === id ? "bg-lime text-ink" : "bg-white/5")}
           >
             {label}
           </button>
@@ -319,7 +326,7 @@ export function ReportView({
       <ul className="space-y-2">
         {visible.map((shot) => (
           <li key={shot.id}>
-            <article className={cx("rounded-3xl border px-3 py-3", selected === shot.id ? "border-lime" : "border-white/10 bg-card/80")}>
+            <article className={cx("surface px-3 py-3", selected === shot.id ? "ring-2 ring-lime" : "")}>
               <div className="flex items-start justify-between gap-2">
                 <button type="button" className="min-h-11 text-left" onClick={() => { setSelected(shot.id); jump(shot.tImpact); }}>
                   <span className="font-display text-lg font-bold text-lime">{formatTime(shot.tImpact)}</span>
@@ -363,7 +370,20 @@ export function ReportView({
 
       <div className="no-print flex flex-wrap gap-2">
         <Button type="button" onClick={share}>
-          <Share2 size={16} /> Condividi
+          <Share2 size={16} /> Link
+        </Button>
+        <Button type="button" variant="sand" onClick={() => shareImage({
+          name: player?.name ?? "Giocatore",
+          score: match.score || sportLabel[match.sport],
+          unforced: summary.unforced,
+          forced: summary.forced,
+          winners: summary.winners,
+          rating: rating?.score ?? null,
+          line: rating?.line ?? "Pochi colpi classificati",
+          example: match.example,
+          manual: match.confidenceNote.includes("colpi segnati a mano"),
+        }).then((shared) => setNotice(shared ? "Scheda condivisa." : "Immagine salvata.")).catch(() => setNotice("Immagine non creata."))}>
+          <ImageDown size={16} /> Immagine
         </Button>
         <Button
           type="button"
@@ -392,6 +412,100 @@ export function ReportView({
       )}
     </div>
   );
+}
+
+async function shareImage(card: {
+  name: string;
+  score: string;
+  unforced: number;
+  forced: number;
+  winners: number;
+  rating: number | null;
+  line: string;
+  example: boolean;
+  manual: boolean;
+}): Promise<boolean> {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1080;
+  canvas.height = 1350;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("canvas");
+  ctx.fillStyle = "#07110e";
+  ctx.fillRect(0, 0, 1080, 1350);
+  ctx.fillStyle = "#d6ff3f";
+  ctx.font = "700 42px sans-serif";
+  ctx.fillText("FONDOCAMPO", 72, 140);
+  ctx.fillStyle = "#f4efe4";
+  ctx.font = "800 92px sans-serif";
+  ctx.fillText(card.name.slice(0, 22), 72, 280);
+  ctx.fillStyle = "#a8b6ad";
+  ctx.font = "500 36px sans-serif";
+  ctx.fillText(card.score, 72, 350);
+  ctx.fillStyle = "#d6ff3f";
+  ctx.font = "800 180px sans-serif";
+  ctx.fillText(card.rating == null ? "—" : String(card.rating), 72, 580);
+  ctx.fillStyle = "#f4efe4";
+  ctx.font = "500 36px sans-serif";
+  wrap(ctx, card.line, 72, 660, 920, 48);
+  const cells = [
+    ["Gratuiti", String(card.unforced), "#ff7a45"],
+    ["Errori", String(card.forced), "#ff5d6c"],
+    ["Vincenti", String(card.winners), "#d6ff3f"],
+  ];
+  cells.forEach((cell, index) => {
+    const x = 72 + index * 320;
+    ctx.fillStyle = "#10241c";
+    roundRect(ctx, x, 860, 290, 220, 36);
+    ctx.fillStyle = cell[2];
+    ctx.font = "800 96px sans-serif";
+    ctx.fillText(cell[1], x + 28, 1000);
+    ctx.font = "600 28px sans-serif";
+    ctx.fillText(cell[0], x + 28, 1050);
+  });
+  ctx.fillStyle = "#d6ff3f";
+  ctx.font = "700 28px sans-serif";
+  const marks = [card.example ? "ESEMPIO" : "", card.manual ? "TAG MANUALE" : ""].filter(Boolean).join("  ·  ");
+  if (marks) ctx.fillText(marks, 72, 1240);
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+  if (!blob) throw new Error("png");
+  const file = new File([blob], "fondocampo.png", { type: "image/png" });
+  if (navigator.canShare?.({ files: [file] })) {
+    await navigator.share({ files: [file], title: card.name });
+    return true;
+  }
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "fondocampo.png";
+  link.click();
+  URL.revokeObjectURL(url);
+  return false;
+}
+
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function wrap(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, max: number, line: number) {
+  const words = text.split(" ");
+  let row = "";
+  let top = y;
+  for (const word of words) {
+    const next = row ? `${row} ${word}` : word;
+    if (ctx.measureText(next).width > max) {
+      ctx.fillText(row, x, top);
+      row = word;
+      top += line;
+    } else row = next;
+  }
+  if (row) ctx.fillText(row, x, top);
 }
 
 function EditSheet({

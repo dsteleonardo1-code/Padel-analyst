@@ -32,20 +32,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="mx-auto min-h-dvh max-w-lg">
-      <header className="safe-top no-print sticky top-0 z-20 flex items-center justify-between bg-ink/80 px-4 py-3 backdrop-blur">
+      <header className="safe-top no-print sticky top-0 z-20 flex items-center justify-between border-b border-white/5 bg-ink/75 px-4 py-3 backdrop-blur-md">
         <Link href="/" className="flex items-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-lime font-display text-lg font-extrabold text-ink">F</span>
+          <span className="grid h-9 w-9 place-items-center rounded-2xl bg-lime font-display text-lg font-extrabold text-ink shadow-glow">F</span>
           <span>
-            <span className="block font-display text-lg font-bold leading-none">{it.appName}</span>
-            <span className="text-[11px] uppercase tracking-[0.16em] text-mute">Padel · Tennis</span>
+            <span className="block font-display text-lg font-bold leading-none tracking-tight">{it.appName}</span>
+            <span className="text-[10px] uppercase tracking-[0.22em] text-mute">Padel · Tennis</span>
           </span>
         </Link>
-        <Link href="/profilo" className="min-h-11 rounded-full border border-white/10 px-3 py-2 text-sm text-sand">
+        <Link href="/profilo" className="press min-h-11 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-sand">
           {it.nav.profile}
         </Link>
       </header>
       <main className="safe-page px-4">{ready ? children : <p className="py-16 text-center text-mute">Apro Fondocampo…</p>}</main>
-      <nav className="no-print fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-ink/95 backdrop-blur">
+      <nav className="no-print fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-ink/90 backdrop-blur-md">
         <ul
           className="mx-auto flex max-w-lg justify-between px-2 pt-1"
           style={{ paddingBottom: "calc(0.35rem + env(safe-area-inset-bottom))" }}
@@ -57,9 +57,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <li key={link.href} className="flex-1">
                 <Link
                   href={link.href}
-                  className={`flex min-h-11 flex-col items-center justify-center gap-0.5 text-[11px] ${active ? "text-lime" : "text-mute"}`}
+                  className={`press flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-2xl text-[11px] ${active ? "text-lime" : "text-mute"}`}
                 >
-                  <Icon size={18} aria-hidden />
+                  <Icon size={18} aria-hidden className={active ? "drop-shadow-[0_0_6px_rgba(214,255,63,0.7)]" : undefined} />
                   {link.label}
                 </Link>
               </li>

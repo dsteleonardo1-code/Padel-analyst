@@ -49,7 +49,7 @@ export function TagBar({ time, onStamp }: { time: number; onStamp: (stamp: Stamp
   const ready = type != null && outcome != null && zone != null;
 
   return (
-    <div className="space-y-2 rounded-3xl border border-white/10 bg-pine p-3">
+    <div className="surface space-y-2 p-3">
       <div className="flex items-baseline justify-between">
         <p className="font-display text-lg font-bold">Segna</p>
         <p className="font-display text-sm tabular-nums text-lime">{formatTime(time)}</p>

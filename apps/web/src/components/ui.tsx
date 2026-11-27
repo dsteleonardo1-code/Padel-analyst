@@ -17,7 +17,7 @@ export function Button({
   return (
     <button
       className={cx(
-        "inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition disabled:opacity-40",
+        "press inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold shadow-card transition disabled:opacity-40",
         styles,
         className,
       )}
@@ -99,7 +99,14 @@ export function ExampleMark({ className }: { className?: string }) {
 }
 
 export function SourceMark({ source, example, hand = false }: { source: AnalysisSource; example: boolean; hand?: boolean }) {
-  if (hand) return <ExampleMark />;
+  if (hand) {
+    return (
+      <span className="flex flex-col items-end gap-1">
+        <ExampleMark />
+        <span className="rounded-full border border-lime/40 bg-lime/10 px-2 py-0.5 text-[11px] font-bold tracking-wide text-lime">Tag manuale</span>
+      </span>
+    );
+  }
   if (example && source === "browser_heuristic") {
     return (
       <span className="flex gap-1">
@@ -116,12 +123,12 @@ export function SourceMark({ source, example, hand = false }: { source: Analysis
 }
 
 export function Card({ children, className }: { children: ReactNode; className?: string }) {
-  return <section className={cx("rounded-3xl border border-white/10 bg-card/90 p-4 shadow-card print-surface", className)}>{children}</section>;
+  return <section className={cx("surface print-surface p-4", className)}>{children}</section>;
 }
 
 export function Fold({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <details className="rounded-3xl border border-white/10 bg-card/80 px-4 py-2 print-surface">
+    <details className="surface print-surface px-4 py-2">
       <summary className="min-h-11 cursor-pointer list-none font-display text-lg font-bold [&::-webkit-details-marker]:hidden">{title}</summary>
       <div className="pb-3 pt-2">{children}</div>
     </details>

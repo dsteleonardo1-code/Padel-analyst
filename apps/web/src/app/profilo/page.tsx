@@ -46,7 +46,7 @@ export default function ProfilePage() {
           <ul className="space-y-2">
             {[...rows].reverse().map((row) => (
               <li key={row.match.id}>
-                <Link href={`/partita/?id=${row.match.id}`} className="block rounded-3xl border border-white/10 bg-card p-3">
+                <Link href={`/partita/?id=${row.match.id}`} className="surface block p-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-mute">
                       {state.players.find((player) => player.id === row.match.focusPlayerId)?.name ?? "Giocatore"} · {formatDate(row.match.date)}

@@ -1,8 +1,9 @@
 "use client";
 
 import type { AdviceItem } from "@/lib/advice";
-import { phaseErrors, pressureErrors, sidePoints, typeBoard, zoneBoard } from "@/lib/analyst";
-import { cx, formatPct, formatTime } from "@/lib/format";
+import { phaseErrors, pressureErrors, sidePoints, typeBoard, zoneBoard, type ZoneRow } from "@/lib/analyst";
+import type { CourtZone } from "@/lib/types";
+import { formatPct, formatTime } from "@/lib/format";
 import { serveStats } from "@/lib/stats";
 import type { Match, Rally, Shot } from "@/lib/types";
 
@@ -41,11 +42,11 @@ export function AnalystBoard({
       <section>
         <h2 className="mb-2 font-display text-lg font-bold">Allenare</h2>
         {priorities.length === 0 ? (
-          <p className="rounded-3xl border border-white/10 bg-pine px-3 py-4 text-sm text-mute">Segna gli errori per avere le priorità.</p>
+          <p className="surface px-3 py-4 text-sm text-mute">Segna gli errori per avere le priorità.</p>
         ) : (
           <ol className="space-y-2">
             {priorities.map((item, index) => (
-              <li key={item.key} className="rounded-3xl border border-white/10 bg-pine px-3 py-3">
+              <li key={item.key} className="surface px-3 py-3">
                 <div className="flex items-baseline justify-between gap-2">
                   <p className="font-display text-xl font-bold leading-none">
                     {index + 1}. {item.title}
@@ -64,36 +65,38 @@ export function AnalystBoard({
         )}
       </section>
 
-      <section>
-        <h2 className="mb-2 font-display text-lg font-bold">Colpi</h2>
+      <section className="surface p-3">
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2 className="font-display text-lg font-bold">Colpi</h2>
+          <p className="text-[11px] text-mute">
+            <span className="text-coral">errori</span> · <span className="text-lime">vincenti</span>
+          </p>
+        </div>
         {types.length === 0 ? (
           <p className="text-sm text-mute">Nessun colpo classificato.</p>
         ) : (
-          <ul className="flex gap-2 overflow-x-auto pb-1">
-            {types.map((row) => (
-              <li key={row.id} className="w-24 shrink-0 rounded-3xl border border-white/10 bg-pine px-2 py-3 text-center">
-                <p className="text-[11px] uppercase tracking-wide text-mute">{row.label}</p>
-                <p className="font-display text-3xl font-extrabold leading-none text-coral">{row.errors}</p>
-                <p className="mt-1 text-[11px] text-lime">{row.winners} vinti</p>
-              </li>
-            ))}
-          </ul>
+          <BarChart rows={types.map((row) => ({ id: row.id, label: row.label, errors: row.errors, winners: row.winners }))} />
         )}
       </section>
 
-      {zones.length > 0 && (
-        <section>
+      <section className="surface grid grid-cols-[1fr_7.5rem] items-center gap-2 p-3">
+        <div>
           <h2 className="mb-2 font-display text-lg font-bold">Zona</h2>
-          <ul className={cx("grid gap-2", zones.length > 2 ? "grid-cols-4" : "grid-cols-2")}>
-            {zones.map((row) => (
-              <li key={row.zone} className="rounded-3xl border border-white/10 bg-pine px-1 py-2 text-center">
-                <p className="text-[11px] text-mute">{row.label}</p>
-                <p className="font-display text-2xl font-extrabold text-coral">{row.errors}</p>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+          {zones.length === 0 ? (
+            <p className="text-sm text-mute">Nessuna zona segnata.</p>
+          ) : (
+            <ul className="space-y-1">
+              {zones.map((row) => (
+                <li key={row.zone} className="flex items-baseline justify-between text-sm">
+                  <span>{row.label}</span>
+                  <span className="font-display text-xl font-bold text-coral">{row.errors}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <ZoneCourt zones={zones} />
+      </section>
 
       <section className="grid grid-cols-2 gap-2">
         <Stat label="A rete" value={sides.net.pct == null ? "—" : formatPct(sides.net.pct)} hint={sides.net.played ? `${sides.net.won}/${sides.net.played}` : "pochi punti"} />
@@ -114,11 +117,53 @@ export function AnalystBoard({
 
 function Stat({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
-    <div className="rounded-3xl border border-white/10 bg-pine px-2 py-2 text-center">
+    <div className="surface px-2 py-2 text-center">
       <p className="text-[11px] uppercase tracking-wide text-mute">{label}</p>
       <p className="font-display text-2xl font-extrabold leading-none">{value}</p>
       <p className="text-[11px] text-mute">{hint}</p>
     </div>
+  );
+}
+
+function BarChart({ rows }: { rows: Array<{ id: string; label: string; errors: number; winners: number }> }) {
+  const max = Math.max(1, ...rows.map((row) => row.errors + row.winners));
+  return (
+    <ul className="space-y-2">
+      {rows.map((row) => (
+        <li key={row.id}>
+          <div className="flex items-baseline justify-between text-sm">
+            <span>{row.label}</span>
+            <span className="text-xs text-mute">{row.errors} · {row.winners}</span>
+          </div>
+          <div className="mt-1 flex h-2 overflow-hidden rounded-full bg-white/10">
+            <span className="h-2 bg-coral" style={{ width: `${(row.errors / max) * 100}%` }} />
+            <span className="h-2 bg-lime" style={{ width: `${(row.winners / max) * 100}%` }} />
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function ZoneCourt({ zones }: { zones: ZoneRow[] }) {
+  const errors = (zone: CourtZone) => zones.find((row) => row.zone === zone)?.errors ?? 0;
+  const max = Math.max(1, ...zones.map((row) => row.errors), 1);
+  const heat = (zone: CourtZone) => {
+    const count = errors(zone);
+    if (!count) return "rgba(255,255,255,0.04)";
+    return `rgba(255,93,108,${0.28 + (0.62 * count) / max})`;
+  };
+  return (
+    <svg viewBox="0 0 80 120" className="w-full" role="img" aria-label="Mini campo, calore degli errori">
+      <rect x="4" y="4" width="72" height="112" rx="3" fill="#0c1c16" stroke="rgba(244,239,228,0.45)" />
+      <rect x="4" y="62" width="72" height="16" fill={heat("net")} />
+      <rect x="4" y="78" width="72" height="16" fill={heat("transition")} />
+      <rect x="4" y="94" width="72" height="22" fill={heat("baseline")} />
+      <rect x="4" y="78" width="7" height="38" fill={heat("wall")} />
+      <line x1="4" y1="60" x2="76" y2="60" stroke="#d6ff3f" strokeWidth="1.2" />
+      <text x="40" y="14" textAnchor="middle" fill="#a8b6ad" fontSize="6">loro</text>
+      <text x="40" y="110" textAnchor="middle" fill="#f4efe4" fontSize="6">tuo</text>
+    </svg>
   );
 }
 

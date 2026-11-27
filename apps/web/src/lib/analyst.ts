@@ -239,6 +239,20 @@ export function buildTaggedShot(choice: TagChoice): Shot {
   };
 }
 
+/**
+ * 50 is even. Each classified winner pulls up, each error pulls down.
+ * Fewer than 4 classified shots: no score.
+ */
+export function matchRating(shots: Shot[]): { score: number; line: string } | null {
+  const classified = shots.filter((shot) => shot.outcome !== "unclassified" && shot.type !== "unclassified");
+  if (classified.length < 4) return null;
+  const winners = classified.filter((shot) => shot.outcome === "winner").length;
+  const errors = classified.filter((shot) => isError(shot.outcome)).length;
+  const raw = 50 + ((winners - errors) / classified.length) * 50;
+  const score = Math.round(Math.min(100, Math.max(0, raw)));
+  return { score, line: `${winners} vincenti, ${errors} errori, su ${classified.length} colpi.` };
+}
+
 export function placeZone(shot: Shot, zone: CourtZone): Shot {
   const spot = ZONE_SPOT[zone];
   return {

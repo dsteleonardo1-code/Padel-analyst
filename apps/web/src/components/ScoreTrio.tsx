@@ -18,7 +18,7 @@ export function ScoreTrio({ unforced, forced, winners }: { unforced: number; for
 
 function Stat({ icon, value, label, tone }: { icon: ReactNode; value: number; label: string; tone: string }) {
   return (
-    <div className="rounded-3xl border border-white/10 bg-pine px-2 py-3 text-center">
+    <div className="surface px-2 py-3 text-center">
       <span className={`mx-auto grid h-7 w-7 place-items-center rounded-full bg-white/5 ${tone}`}>{icon}</span>
       <p className={`mt-1 font-display text-4xl font-extrabold leading-none ${tone}`}>{value}</p>
       <p className="mt-1 text-[11px] uppercase tracking-wide text-mute">{label}</p>

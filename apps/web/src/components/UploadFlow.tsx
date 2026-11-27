@@ -186,24 +186,26 @@ export function UploadFlow() {
   return (
     <div className="space-y-4 py-4">
       {step === "load" && (
-        <section className="rise">
-          <p className="text-xs uppercase tracking-[0.18em] text-lime">Fondocampo</p>
-          <h1 className="mt-1 font-display text-4xl font-extrabold leading-none">Carica video</h1>
-          <div className="mt-4 grid grid-cols-2 gap-2">
+        <section className="rise space-y-4">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.22em] text-lime">Fondocampo</p>
+            <h1 className="mt-2 font-display text-5xl font-extrabold leading-[0.9]">La scheda del tuo gioco</h1>
+          </div>
+          <div className="surface grid grid-cols-2 gap-1 p-1">
             {(["padel", "tennis"] as Sport[]).map((item) => (
               <button
                 key={item}
                 type="button"
                 onClick={() => setSport(item)}
-                className={`min-h-11 rounded-full text-sm font-semibold ${sport === item ? "bg-lime text-ink" : "bg-white/5"}`}
+                className={`press min-h-11 rounded-2xl text-sm font-semibold ${sport === item ? "bg-lime text-ink shadow-glow" : "text-sand"}`}
               >
                 {item === "padel" ? "Padel" : "Tennis"}
               </button>
             ))}
           </div>
-          <label className="mt-4 flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-[2rem] border border-dashed border-lime/50 bg-lime/10 px-4 text-center">
-            <span className="font-display text-2xl font-bold">Scegli il video</span>
-            <span className="mt-1 text-sm text-mute">{file ? file.name : "Dal telefono o dal computer"}</span>
+          <label className="surface press flex min-h-40 cursor-pointer flex-col items-center justify-center border-lime/30 bg-lime/10 px-4 text-center">
+            <span className="font-display text-3xl font-extrabold">Carica video</span>
+            <span className="mt-1 text-sm text-mute">{file ? file.name : "Resta sul telefono"}</span>
             <input
               type="file"
               accept="video/*"
@@ -218,16 +220,20 @@ export function UploadFlow() {
               }}
             />
           </label>
-          <Button type="button" variant="ghost" className="mt-3 w-full" onClick={openExample}>
-            Prova il video di esempio
-          </Button>
+          <button type="button" onClick={openExample} className="surface press flex min-h-20 w-full items-center justify-between px-5 text-left">
+            <span>
+              <span className="block font-display text-2xl font-bold">Prova con l'esempio</span>
+              <span className="text-sm text-mute">Video gratuito, segnato ESEMPIO</span>
+            </span>
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-lime text-lg font-bold text-ink">→</span>
+          </button>
         </section>
       )}
 
       {step === "who" && (
         <section>
-          <h1 className="font-display text-3xl font-extrabold">Chi controllo?</h1>
-          <p className="mt-1 text-sm text-mute">Tocca il giocatore, oppure descrivilo.</p>
+          <h1 className="font-display text-4xl font-extrabold leading-none">Giocatore</h1>
+          <p className="mt-1 text-sm text-mute">Tocca in campo, o scrivi maglia e lato.</p>
           <div className="relative mt-3 overflow-hidden rounded-[2rem] bg-black">
             <canvas
               ref={canvasRef}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildAdvice } from "./advice";
-import { buildTaggedShot, phaseErrors, pressureErrors, previousSheet, shotZone, sidePoints, topPriorities, typeBoard, zoneBoard } from "./analyst";
+import { buildTaggedShot, matchRating, phaseErrors, pressureErrors, previousSheet, shotZone, sidePoints, topPriorities, typeBoard, zoneBoard } from "./analyst";
 import { classifyHeuristic, detectImpacts, extractBlobs, greenRatio, groupByGap, motionMask } from "./analyze";
 import { clipWindow, exampleImpact } from "./clips";
 import { buildExampleData } from "./examples";
@@ -322,6 +322,12 @@ describe("analyst sheet", () => {
     expect(topPriorities(luca, "p-luca")[0]?.drill.length).toBeGreaterThan(10);
     const saved = data.matches.filter((match) => match.saved);
     expect(previousSheet(saved, saved.find((match) => match.id === "m-galan-errori")!)?.id).toBe("m-galan");
+    expect(matchRating(data.shots.filter((shot) => shot.matchId === "m-galan-errori"))).toBeNull();
+    const rated = matchRating(luca);
+    expect(rated).not.toBeNull();
+    expect(rated!.score).toBeGreaterThanOrEqual(0);
+    expect(rated!.score).toBeLessThanOrEqual(100);
+    expect(rated!.line).toContain("colpi");
   });
 });
 

@@ -65,6 +65,12 @@ export function summarize(shots: Shot[]): PlayerSummary {
   const causeMap = new Map<ErrorCause, number>();
 
   for (const shot of shots) {
+    if (isError(shot.outcome) && shot.errorReason) {
+      reasonMap.set(shot.errorReason, (reasonMap.get(shot.errorReason) ?? 0) + 1);
+    }
+    if (isError(shot.outcome) && shot.errorCause) {
+      causeMap.set(shot.errorCause, (causeMap.get(shot.errorCause) ?? 0) + 1);
+    }
     if (shot.type === "unclassified") continue;
     const row = byTypeMap.get(shot.type) ?? {
       type: shot.type,
@@ -78,12 +84,6 @@ export function summarize(shots: Shot[]): PlayerSummary {
     if (isError(shot.outcome)) row.errors += 1;
     if (shot.outcome === "winner") row.winners += 1;
     byTypeMap.set(shot.type, row);
-    if (isError(shot.outcome) && shot.errorReason) {
-      reasonMap.set(shot.errorReason, (reasonMap.get(shot.errorReason) ?? 0) + 1);
-    }
-    if (isError(shot.outcome) && shot.errorCause) {
-      causeMap.set(shot.errorCause, (causeMap.get(shot.errorCause) ?? 0) + 1);
-    }
   }
 
   const byType = [...byTypeMap.values()]

@@ -116,7 +116,9 @@ export function VideoStage({
         </label>
       )}
       <p className="px-3 pb-3 text-[11px] text-mute">
-        {match.confidenceNote.startsWith("STIMA")
+        {match.confidenceNote.includes("colpi segnati a mano")
+          ? "colpi segnati a mano (prova), non riconoscimento automatico"
+          : match.confidenceNote.startsWith("STIMA")
           ? "STIMA · video di terzi, solo prova. Fonte sotto il nome."
           : match.example
             ? match.sport === "padel"

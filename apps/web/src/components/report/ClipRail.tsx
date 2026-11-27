@@ -35,8 +35,11 @@ export function ClipRail({ shots, videoUrl, example }: { shots: Shot[]; videoUrl
           ? pool.filter((shot) => shot.outcome === "winner")
           : pool;
 
+  const impactOf = (shot: Shot, index: number, total: number, length: number) =>
+    !example || shot.manuallyCorrected ? shot.tImpact : exampleImpact(index, total, length);
+
   const boundsOf = (shot: Shot, index: number) => {
-    const impact = example ? exampleImpact(index, clips.length, duration || (example ? 15 : shot.tImpact)) : shot.tImpact;
+    const impact = impactOf(shot, index, clips.length, duration || (example ? 15 : shot.tImpact));
     return clipWindow(impact, duration || impact + CLIP_AFTER);
   };
 
@@ -64,7 +67,7 @@ export function ClipRail({ shots, videoUrl, example }: { shots: Shot[]; videoUrl
       for (let index = 0; index < Math.min(clips.length, 18); index += 1) {
         if (cancel || !ctx) return;
         const range = clipWindow(
-          example ? exampleImpact(index, clips.length, video.duration || 15) : clips[index].tImpact,
+          impactOf(clips[index], index, clips.length, video.duration || 15),
           video.duration || 15,
         );
         video.currentTime = Math.min(Math.max(0, (video.duration || range.start) - 0.05), range.start + 0.35);
@@ -111,7 +114,7 @@ export function ClipRail({ shots, videoUrl, example }: { shots: Shot[]; videoUrl
     setOpen(index);
     const video = modalRef.current;
     if (!video) return;
-    const range = clipWindow(example ? exampleImpact(index, list.length, duration || 15) : shot.tImpact, duration || shot.tImpact + CLIP_AFTER);
+    const range = clipWindow(impactOf(shot, index, list.length, duration || 15), duration || shot.tImpact + CLIP_AFTER);
     video.currentTime = range.start;
     video.play().catch(() => undefined);
   }
@@ -164,6 +167,7 @@ export function ClipRail({ shots, videoUrl, example }: { shots: Shot[]; videoUrl
                   {outcomeLabel[shot.outcome]}
                 </span>
                 <span className="mt-0.5 block text-sm">{shotLabel[shot.type]}</span>
+                {shot.note && <span className="mt-1 line-clamp-4 block text-[11px] leading-snug text-sand">{shot.note}</span>}
                 <span className="text-[11px] text-mute">{formatTime(shot.tImpact)} · {CLIP_BEFORE}s+{CLIP_AFTER}s</span>
               </span>
             </button>
@@ -192,6 +196,7 @@ export function ClipRail({ shots, videoUrl, example }: { shots: Shot[]; videoUrl
               <div className="min-w-0 flex-1 text-center">
                 <p className="truncate font-semibold">{outcomeLabel[clips[open].outcome]} · {shotLabel[clips[open].type]}</p>
                 <p className="text-xs text-mute">{highlight ? "Highlight" : "Clip"} {open + 1}/{clips.length}</p>
+                {clips[open].note && <p className="mt-1 text-left text-xs leading-relaxed text-sand">{clips[open].note}</p>}
               </div>
               <button type="button" className="grid h-11 w-11 place-items-center rounded-full bg-white/10" aria-label="Clip successiva" onClick={() => setOpen(Math.min(clips.length - 1, open + 1))}>
                 <ChevronRight />

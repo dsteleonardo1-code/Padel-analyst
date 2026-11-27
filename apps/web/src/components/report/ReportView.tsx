@@ -121,7 +121,7 @@ export function ReportView({
           {match.limitNote && <p className="mt-2 text-xs leading-relaxed text-mute">{match.limitNote}</p>}
           {match.source !== "example" && <p className="mt-1 text-xs text-clay">{match.confidenceNote}</p>}
         </div>
-        <SourceMark source={match.source} example={match.example} />
+        <SourceMark source={match.source} example={match.example} hand={match.confidenceNote.includes("colpi segnati a mano")} />
       </header>
       {notice && <Banner tone="sand">{notice}</Banner>}
 

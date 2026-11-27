@@ -127,8 +127,10 @@ describe("corrections and deltas", () => {
 
   it("keeps example sheets off the profile until saved", () => {
     const data = buildExampleData();
-    expect(data.matches.filter((match) => match.id !== "m-galan").every((match) => !isOnProfile(match))).toBe(true);
+    const onProfile = new Set(["m-galan", "m-galan-errori"]);
+    expect(data.matches.filter((match) => !onProfile.has(match.id)).every((match) => !isOnProfile(match))).toBe(true);
     expect(isOnProfile(data.matches.find((match) => match.id === "m-galan")!)).toBe(true);
+    expect(isOnProfile(data.matches.find((match) => match.id === "m-galan-errori")!)).toBe(true);
     expect(isOnProfile({ ...data.matches[0], saved: true })).toBe(true);
     expect(readPlayerCue("quello con maglia rossa, lato sinistro, in basso").side).toBe("left");
   });
@@ -146,6 +148,15 @@ describe("corrections and deltas", () => {
     const galan = summarize(playerShots(data.shots, "p-galan", "m-galan"));
     expect(galan.unforced + galan.forced + galan.winners).toBe(0);
     expect(galan.unclassified).toBeGreaterThan(0);
+    const hand = data.matches.find((match) => match.id === "m-galan-errori");
+    expect(hand?.confidenceNote).toContain("colpi segnati a mano (prova), non riconoscimento automatico");
+    expect(hand?.confidenceNote.startsWith("STIMA")).toBe(false);
+    const tagged = playerShots(data.shots, "p-galan", "m-galan-errori");
+    expect(tagged).toHaveLength(1);
+    expect(tagged[0].outcome).toBe("forced_error");
+    expect(tagged[0].manuallyCorrected).toBe(true);
+    expect(tagged[0].tImpact).toBeCloseTo(90.6);
+    expect(gifted(0, 1).line).toBe("1 errore = 1 punto = meno di 1 game regalato");
   });
 
   it("colors an error drop as an improvement", () => {

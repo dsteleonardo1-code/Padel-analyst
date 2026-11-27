@@ -98,7 +98,8 @@ export function ExampleMark({ className }: { className?: string }) {
   );
 }
 
-export function SourceMark({ source, example }: { source: AnalysisSource; example: boolean }) {
+export function SourceMark({ source, example, hand = false }: { source: AnalysisSource; example: boolean; hand?: boolean }) {
+  if (hand) return <ExampleMark />;
   if (example && source === "browser_heuristic") {
     return (
       <span className="flex gap-1">

@@ -46,9 +46,12 @@ export default function ProfilePage() {
               <li key={row.match.id}>
                 <Link href={`/partita/?id=${row.match.id}`} className="block rounded-3xl border border-white/10 bg-card p-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-mute">{formatDate(row.match.date)}</span>
+                    <span className="text-sm text-mute">
+                      {state.players.find((player) => player.id === row.match.focusPlayerId)?.name ?? "Giocatore"} · {formatDate(row.match.date)}
+                    </span>
                     {row.match.example && <ExampleMark />}
                   </div>
+                  <p className="mt-1 text-sm">{row.match.score || row.match.place}</p>
                   <p className="mt-1 font-display text-2xl font-bold">
                     {row.summary.unforced} · {row.summary.forced} · {row.summary.winners}
                   </p>

@@ -1,3 +1,4 @@
+import { buildGalanErrorSheet } from "./galan-errori";
 import { buildGalanSheet } from "./galan";
 import { uid } from "./format";
 import { EXAMPLE_OBSERVATION } from "./types";
@@ -541,10 +542,11 @@ export function sheetFromExample(sport: Sport, label: string, side: CourtSide | 
 export function buildExampleData(): { players: Player[]; matches: Match[]; rallies: Rally[]; shots: Shot[] } {
   const built = [luca1, luca2, luca3, marco1, marco2].map(materialize);
   const galan = buildGalanSheet();
+  const galanErrori = buildGalanErrorSheet();
   return {
     players: [...examplePlayers, galan.player],
-    matches: [...built.map((item) => item.match), galan.match],
-    rallies: [...built.flatMap((item) => item.rallies), ...galan.rallies],
-    shots: [...built.flatMap((item) => item.shots), ...galan.shots],
+    matches: [...built.map((item) => item.match), galan.match, galanErrori.match],
+    rallies: [...built.flatMap((item) => item.rallies), ...galan.rallies, ...galanErrori.rallies],
+    shots: [...built.flatMap((item) => item.shots), ...galan.shots, ...galanErrori.shots],
   };
 }

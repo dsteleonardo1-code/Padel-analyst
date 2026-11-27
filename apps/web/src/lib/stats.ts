@@ -30,6 +30,18 @@ export function isError(outcome: Shot["outcome"]): boolean {
   return outcome === "unforced_error" || outcome === "forced_error";
 }
 
+/** Each error is one point given away. A game is at least 4 points. */
+export function gifted(unforced: number, forced: number): { points: number; games: number; line: string } {
+  const points = unforced + forced;
+  const games = Math.floor(points / 4);
+  const rest = points % 4;
+  const errorWord = points === 1 ? "errore" : "errori";
+  const pointWord = points === 1 ? "punto" : "punti";
+  const gamesText =
+    points === 0 ? "0 game regalati" : rest === 0 ? `${games} game regalati` : games === 0 ? "meno di 1 game regalato" : `più di ${games} game regalati`;
+  return { points, games, line: `${points} ${errorWord} = ${points} ${pointWord} = ${gamesText}` };
+}
+
 export function playerShots(shots: Shot[], playerId: string, matchId?: string): Shot[] {
   return shots.filter((shot) => shot.playerId === playerId && (matchId ? shot.matchId === matchId : true));
 }
@@ -154,6 +166,8 @@ export function serveStats(shots: Shot[], rallies: Rally[], playerId: string, ma
 export interface QuarterStat {
   label: string;
   errors: number;
+  unforced: number;
+  forced: number;
   winners: number;
   shots: number;
 }
@@ -168,6 +182,8 @@ export function quarters(shots: Shot[], durationSec: number): QuarterStat[] {
     return {
       label,
       errors: slice.filter((shot) => isError(shot.outcome)).length,
+      unforced: slice.filter((shot) => shot.outcome === "unforced_error").length,
+      forced: slice.filter((shot) => shot.outcome === "forced_error").length,
       winners: slice.filter((shot) => shot.outcome === "winner").length,
       shots: slice.length,
     };

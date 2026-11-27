@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { formatDate, formatPct } from "@/lib/format";
-import { it, sportLabel } from "@/lib/i18n";
-import { playerShots, summarize } from "@/lib/stats";
+import { formatDate } from "@/lib/format";
+import { gifted, playerShots, summarize } from "@/lib/stats";
 import { TrendCharts } from "@/components/TrendCharts";
 import { useStore } from "@/components/Store";
+import { ScoreTrio } from "@/components/ScoreTrio";
 import { Card, ExampleMark, SourceMark } from "@/components/ui";
 
 export default function HomePage() {
@@ -18,11 +18,8 @@ export default function HomePage() {
   return (
     <div className="space-y-5 py-4">
       <section>
-        <p className="text-xs uppercase tracking-[0.18em] text-lime">In tasca, a bordocampo</p>
-        <h1 className="mt-1 font-display text-4xl font-extrabold leading-[0.95]">{it.tagline}</h1>
-        <p className="mt-3 text-sm leading-relaxed text-mute">
-          Carichi una clip, tocchi chi seguire e leggi errori, colpi buoni e un esercizio concreto. I dati dimostrativi sono sempre marcati {it.example}.
-        </p>
+        <h1 className="font-display text-4xl font-extrabold leading-none">Fondocampo</h1>
+        <p className="mt-1 text-sm text-mute">Padel e tennis. I demo sono ESEMPIO.</p>
         <div className="mt-4 flex flex-wrap gap-2">
           <Link href="/analisi" className="inline-flex min-h-11 items-center rounded-full bg-lime px-4 font-semibold text-ink">
             Carica un video
@@ -62,8 +59,7 @@ export default function HomePage() {
                       <span className="text-sm text-mute">{formatDate(match.date)} · {player?.name}</span>
                       <SourceMark source={match.source} example={false} />
                     </div>
-                    <p className="font-display text-xl font-bold">{summary.errors} errori · {summary.good} colpi buoni</p>
-                    <p className="text-sm text-mute">{match.place}</p>
+                    <p className="font-display text-xl font-bold">{summary.unforced} gratuiti · {summary.forced} errori · {summary.winners} vincenti</p>
                   </Link>
                 </li>
               );
@@ -73,24 +69,27 @@ export default function HomePage() {
       )}
 
       <section>
-        <div className="flex items-end justify-between">
-          <h2 className="font-display text-2xl font-bold">Partite di esempio</h2>
-          <ExampleMark />
-        </div>
-        <p className="mt-1 text-sm text-mute">Numeri illustrativi, non misurati su un video vero. Servono a leggere il report subito.</p>
+        <h2 className="font-display text-2xl font-bold">ESEMPIO</h2>
         <ul className="mt-3 flex snap-x gap-3 overflow-x-auto pb-2">
           {state.matches.filter((match) => match.example).map((match) => {
             const summary = summarize(playerShots(state.shots, match.focusPlayerId, match.id));
             const player = state.players.find((item) => item.id === match.focusPlayerId);
             return (
               <li key={match.id} className="w-[78%] shrink-0 snap-start">
-                <Link href={`/partita/?id=${match.id}`} className="block h-full rounded-3xl border border-lime/25 bg-card p-4">
-                  <ExampleMark />
-                  <p className="mt-3 font-display text-2xl font-bold leading-tight">{player?.name}</p>
-                  <p className="text-sm text-mute">{sportLabel[match.sport]} · {formatDate(match.date)}</p>
-                  <p className="mt-3 font-display text-3xl font-extrabold text-coral">{summary.errors}</p>
-                  <p className="text-xs uppercase tracking-wide text-mute">errori · {summary.good} vincenti · {formatPct(summary.errorRate)}</p>
-                  <p className="mt-2 text-sm">{match.score} contro {match.opponents}</p>
+                <Link href={`/partita/?id=${match.id}`} className="block rounded-3xl border border-lime/25 bg-card p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="font-display text-xl font-bold">{player?.name}</p>
+                    <ExampleMark />
+                  </div>
+                  <p className="text-sm text-mute">{formatDate(match.date)} · {match.score}</p>
+                  <p className="mt-3 font-display text-3xl font-extrabold">
+                    <span className="text-clay">{summary.unforced}</span>
+                    <span className="text-mute"> · </span>
+                    <span className="text-coral">{summary.forced}</span>
+                    <span className="text-mute"> · </span>
+                    <span className="text-lime">{summary.winners}</span>
+                  </p>
+                  <p className="text-xs text-mute">{gifted(summary.unforced, summary.forced).line}</p>
                 </Link>
               </li>
             );
@@ -100,38 +99,24 @@ export default function HomePage() {
 
       {luca && (
         <Card>
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-xl font-bold">Errori di {luca.name}</h2>
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="font-display text-xl font-bold">{luca.name}</h2>
             <ExampleMark />
           </div>
-          <div className="mt-3">
-            <TrendCharts
-              rows={lucaMatches.map((match) => ({
+          <TrendCharts
+            rows={lucaMatches.map((match) => {
+              const summary = summarize(playerShots(state.shots, luca.id, match.id));
+              return {
                 label: formatDate(match.date).slice(0, 5),
-                errors: summarize(playerShots(state.shots, luca.id, match.id)).errors,
-                winnerPct: summarize(playerShots(state.shots, luca.id, match.id)).winnerRate,
-              }))}
-            />
-          </div>
-          <Link href="/giocatore/?id=p-luca" className="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-lime">
-            Apri il profilo di esempio
-          </Link>
+                free: summary.unforced,
+                errors: summary.forced,
+                winners: summary.winners,
+                games: gifted(summary.unforced, summary.forced).games,
+              };
+            })}
+          />
         </Card>
       )}
-
-      <section className="grid gap-2">
-        {[
-          ["1", "Scegli", "Padel o tennis, e la persona da seguire."],
-          ["2", "Tocca", "Sul primo fotogramma indichi chi è il tuo giocatore."],
-          ["3", "Leggi", "Errori, un esercizio e i punti da rivedere."],
-        ].map(([n, title, text]) => (
-          <div key={n} className="flex gap-3 rounded-3xl bg-white/5 p-3">
-            <span className="font-display text-2xl font-bold text-lime">{n}</span>
-            <p><strong>{title}. </strong><span className="text-sm text-mute">{text}</span></p>
-          </div>
-        ))}
-      </section>
-      <p className="text-xs leading-relaxed text-mute">{it.privacy} {it.installIos}</p>
     </div>
   );
 }

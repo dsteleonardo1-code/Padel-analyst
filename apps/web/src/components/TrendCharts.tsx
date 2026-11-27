@@ -4,8 +4,10 @@ import dynamic from "next/dynamic";
 
 export interface ChartRow {
   label: string;
+  free: number;
   errors: number;
-  winnerPct: number | null;
+  winners: number;
+  games: number;
 }
 
 const Inner = dynamic(() => import("./TrendChartsInner"), {
@@ -14,8 +16,6 @@ const Inner = dynamic(() => import("./TrendChartsInner"), {
 });
 
 export function TrendCharts({ rows }: { rows: ChartRow[] }) {
-  if (rows.length < 2) {
-    return <p className="text-sm text-mute">Servono almeno due partite per vedere l&apos;andamento.</p>;
-  }
+  if (rows.length < 2) return null;
   return <Inner rows={rows} />;
 }

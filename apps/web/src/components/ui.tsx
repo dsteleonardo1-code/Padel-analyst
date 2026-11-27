@@ -110,6 +110,15 @@ export function Card({ children, className }: { children: ReactNode; className?:
   return <section className={cx("rounded-3xl border border-white/10 bg-card/90 p-4 shadow-card print-surface", className)}>{children}</section>;
 }
 
+export function Fold({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <details className="rounded-3xl border border-white/10 bg-card/80 px-4 py-2 print-surface">
+      <summary className="min-h-11 cursor-pointer list-none font-display text-lg font-bold [&::-webkit-details-marker]:hidden">{title}</summary>
+      <div className="pb-3 pt-2">{children}</div>
+    </details>
+  );
+}
+
 export function Banner({ tone = "lime", children }: { tone?: "lime" | "clay" | "sand"; children: ReactNode }) {
   const styles = {
     lime: "border-lime/30 bg-lime/10 text-sand",

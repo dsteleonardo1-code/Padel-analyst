@@ -65,8 +65,8 @@ export const shotLabel: Record<ShotType, string> = {
 
 export const outcomeLabel: Record<ShotOutcome, string> = {
   winner: "Vincente",
-  unforced_error: "Errore non forzato",
-  forced_error: "Errore forzato",
+  unforced_error: "Errore gratuito",
+  forced_error: "Errore",
   neutral: "Neutro",
   unclassified: "Non classificato",
 };

@@ -4,7 +4,7 @@ import { classifyHeuristic, detectImpacts, extractBlobs, greenRatio, groupByGap,
 import { buildExampleData } from "./examples";
 import { judgeOutcome } from "./outcome";
 import { decodeShare, encodeShare } from "./share";
-import { deltaTone, percentChange, playerShots, serveStats, skillSnapshots, summarize } from "./stats";
+import { deltaTone, gifted, percentChange, playerShots, serveStats, skillSnapshots, summarize } from "./stats";
 import { mergeWithExamples, parseState } from "./storage";
 import type { EnergySample as Sample } from "./analyze";
 import type { AppState } from "./types";
@@ -114,6 +114,18 @@ describe("corrections and deltas", () => {
     expect(after.errors).toBe(before.errors + 1);
     expect(after.winners).toBe(before.winners - 1);
     expect(shots.some((shot) => shot.manuallyCorrected)).toBe(true);
+  });
+
+  it("turns errors into points and games", () => {
+    expect(gifted(10, 0).line).toBe("10 errori = 10 punti = più di 2 game regalati");
+    expect(gifted(4, 4).line).toBe("8 errori = 8 punti = 2 game regalati");
+    expect(gifted(2, 1).line).toContain("meno di 1 game");
+    const data = buildExampleData();
+    for (const match of data.matches) {
+      const summary = summarize(playerShots(data.shots, match.focusPlayerId, match.id));
+      expect(summary.unforced + summary.forced + summary.winners).toBeGreaterThan(0);
+      expect(match.example).toBe(true);
+    }
   });
 
   it("colors an error drop as an improvement", () => {

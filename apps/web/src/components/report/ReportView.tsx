@@ -9,11 +9,12 @@ import { causeLabel, it, outcomeLabel, reasonLabel, shotLabel, situationLabel, s
 import { encodeShare } from "@/lib/share";
 import { isError, pairStats, playerShots, quarters, serveStats, summarize } from "@/lib/stats";
 import type { ErrorCause, ErrorReason, Match, Player, Rally, Shot, ShotOutcome, ShotType } from "@/lib/types";
-import { Banner, Button, Card, ExampleMark, Select, SourceMark } from "../ui";
+import { ScoreTrio } from "../ScoreTrio";
+import { Banner, Button, ExampleMark, Fold, Select, SourceMark } from "../ui";
 import { CourtMap } from "./CourtMap";
 import { VideoStage } from "./VideoStage";
 
-type Filter = "all" | "errors" | "winners" | "unclassified";
+type Filter = "all" | "free" | "errors" | "winners" | "other";
 
 export function ReportView({
   match,
@@ -52,9 +53,10 @@ export function ReportView({
 
   const visible = mine.filter((shot) => {
     if (typeFilter !== "all" && shot.type !== typeFilter) return false;
-    if (filter === "errors") return isError(shot.outcome);
+    if (filter === "free") return shot.outcome === "unforced_error";
+    if (filter === "errors") return shot.outcome === "forced_error";
     if (filter === "winners") return shot.outcome === "winner";
-    if (filter === "unclassified") return shot.type === "unclassified" || shot.outcome === "unclassified";
+    if (filter === "other") return shot.outcome === "neutral" || shot.outcome === "unclassified" || shot.type === "unclassified";
     return true;
   });
   const rallyList = rallies.filter((rally) => rally.matchId === match.id).sort((a, b) => a.number - b.number);
@@ -97,20 +99,13 @@ export function ReportView({
 
   return (
     <div className="space-y-4 py-4">
-      <header>
-        <div className="flex flex-wrap items-center gap-2">
-          <SourceMark source={match.source} example={match.example} />
-          <span className="text-xs uppercase tracking-wide text-mute">{sportLabel[match.sport]}</span>
+      <header className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-3xl font-bold leading-none">{player?.name ?? "Giocatore"}</h1>
+          <p className="mt-1 text-sm text-mute">{match.score || sportLabel[match.sport]}</p>
         </div>
-        <h1 className="mt-2 font-display text-3xl font-bold leading-tight">{player?.name ?? "Giocatore"}</h1>
-        <p className="mt-1 text-sm text-mute">
-          {match.place} · {match.score || "risultato non indicato"} · {match.opponents || "avversari non indicati"}
-        </p>
-        {match.partner && <p className="text-sm text-mute">Compagno: {match.partner}</p>}
+        <SourceMark source={match.source} example={match.example} />
       </header>
-
-      {match.example ? <Banner>{it.exampleBanner}</Banner> : <Banner tone="clay">{it.heuristicBanner} {match.confidenceNote}</Banner>}
-      {match.limitNote && <Banner tone="sand">{match.limitNote}</Banner>}
       {notice && <Banner tone="sand">{notice}</Banner>}
 
       <VideoStage
@@ -124,12 +119,7 @@ export function ReportView({
         onNext={() => stepRally(1)}
       />
 
-      <div className="grid grid-cols-2 gap-2">
-        <Tile label="Errori" value={String(summary.errors)} hint={`${summary.unforced} non forzati · ${summary.forced} forzati`} tone="coral" />
-        <Tile label="Colpi buoni" value={String(summary.good)} hint="Vincenti chiusi da te" tone="lime" />
-        <Tile label="% errori" value={formatPct(summary.errorRate)} hint={summary.errorRate == null ? "Pochi colpi classificati" : `Su ${summary.classified} colpi classificati`} />
-        <Tile label="% vincenti" value={formatPct(summary.winnerRate)} hint={`${summary.neutrals} neutri · ${summary.unclassified} non classificati`} />
-      </div>
+      <ScoreTrio unforced={summary.unforced} forced={summary.forced} winners={summary.winners} />
 
       {others.length > 1 && onFocus && (
         <label className="block text-sm">
@@ -144,10 +134,9 @@ export function ReportView({
         </label>
       )}
 
-      <Card>
-        <h2 className="font-display text-xl font-bold">Tipi di errore</h2>
+      <Fold title="Perché">
         {summary.byReason.length === 0 ? (
-          <p className="mt-2 text-sm text-mute">{it.unobserved}. Non ci sono errori con un motivo.</p>
+          <p className="text-sm text-mute">{it.unobserved}</p>
         ) : (
           <ul className="mt-3 flex flex-wrap gap-2">
             {summary.byReason.map((row) => (
@@ -173,31 +162,18 @@ export function ReportView({
             </div>
           ))}
         </div>
-      </Card>
+      </Fold>
 
-      <Card className="border-lime/40">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-lime">Priorità principale</p>
-        {advice.primary ? (
-          <AdviceCard item={advice.primary} onJump={jump} prominent />
-        ) : (
-          <p className="mt-2 text-sm text-mute">Non osservato chiaramente: non ci sono errori classificati da cui ricavare un consiglio.</p>
-        )}
-      </Card>
-      {advice.secondary.length > 0 && (
-        <div className="space-y-2">
-          <h2 className="font-display text-xl font-bold">Anche questo</h2>
-          {advice.secondary.map((item) => (
-            <Card key={item.key}>
-              <AdviceCard item={item} onJump={jump} />
-            </Card>
-          ))}
-        </div>
-      )}
+      <Fold title="Cosa migliorare">
+        {advice.primary ? <AdviceCard item={advice.primary} onJump={jump} /> : <p className="text-sm text-mute">{it.unobserved}</p>}
+        {advice.secondary.map((item) => (
+          <AdviceCard key={item.key} item={item} onJump={jump} />
+        ))}
+      </Fold>
 
-      <Card>
-        <h2 className="font-display text-xl font-bold">Cosa fai bene</h2>
+      <Fold title="Cosa fai bene">
         {advice.strengths.length === 0 ? (
-          <p className="mt-2 text-sm text-mute">{it.unobserved}. Servono almeno 4 colpi dello stesso tipo, con vincenti e pochi errori.</p>
+          <p className="text-sm text-mute">{it.unobserved}</p>
         ) : (
           <ul className="mt-3 space-y-3">
             {advice.strengths.map((item) => (
@@ -213,18 +189,14 @@ export function ReportView({
             ))}
           </ul>
         )}
-      </Card>
+      </Fold>
 
-      <Card>
-        <h2 className="font-display text-xl font-bold">Mappa del campo</h2>
-        <div className="mt-3">
-          <CourtMap sport={match.sport} shots={mine} selectedId={selected} />
-        </div>
-      </Card>
+      <Fold title="Mappa">
+        <CourtMap sport={match.sport} shots={mine} selectedId={selected} />
+      </Fold>
 
       {match.sport === "tennis" && (
-        <Card>
-          <h2 className="font-display text-xl font-bold">Servizio e risposta</h2>
+        <Fold title="Servizio">
           {serve.observed ? (
             <ul className="mt-3 space-y-1 text-sm">
               <li>Prime in campo: {formatPct(serve.firstInPct)}</li>
@@ -234,43 +206,40 @@ export function ReportView({
               <li>Doppi falli: {serve.doubleFaults}</li>
             </ul>
           ) : (
-            <p className="mt-2 text-sm text-mute">{it.unobserved}. Servono almeno quattro prime di servizio.</p>
+            <p className="text-sm text-mute">{it.unobserved}</p>
           )}
-        </Card>
+        </Fold>
       )}
 
       {match.sport === "padel" && (
-        <Card>
-          <h2 className="font-display text-xl font-bold">Lato e coppia</h2>
-          <p className="mt-2 text-sm text-mute">
-            Lato seguito: {match.side === "left" ? "sinistra" : match.side === "right" ? "destra" : "non indicato"}. Compagno nel
-            report: {pair.partnerShots} colpi, {pair.partnerWinners} vincenti, {pair.partnerErrors} errori.
-            {pair.partnerShots < 3 ? " Il gioco del compagno non è osservato chiaramente." : ""}
+        <Fold title="Coppia">
+          <p className="text-sm">
+            {match.side === "left" ? "Sinistra" : "Destra"} · compagno {pair.partnerWinners} vincenti, {pair.partnerErrors} errori
           </p>
-        </Card>
+        </Fold>
       )}
 
-      <Card>
-        <h2 className="font-display text-xl font-bold">Nel corso della partita</h2>
-        <ul className="mt-3 space-y-2">
+      <Fold title="Nel tempo">
+        <ul className="space-y-2">
           {blocks.map((block) => (
             <li key={block.label} className="flex items-center justify-between text-sm">
               <span>{block.label}</span>
               <span className="text-mute">
-                {block.shots === 0 ? it.unobserved : `${block.errors} errori · ${block.winners} vincenti`}
+                {block.shots === 0 ? "—" : `${block.unforced} gratuiti · ${block.forced} errori · ${block.winners} vincenti`}
               </span>
             </li>
           ))}
         </ul>
-      </Card>
+      </Fold>
 
       <div className="no-print flex gap-2 overflow-x-auto pb-1">
         {(
           [
             ["all", "Tutti"],
-            ["errors", "Solo errori"],
+            ["free", "Gratuiti"],
+            ["errors", "Errori"],
             ["winners", "Vincenti"],
-            ["unclassified", "Non classificati"],
+            ["other", "Altri"],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -311,12 +280,10 @@ export function ReportView({
                 )}
               </div>
               <p className="text-xs text-mute">
-                {shot.errorCause ? `Causa probabile: ${causeLabel[shot.errorCause]}. ` : ""}
-                {shot.situation ? `${situationLabel[shot.situation]}. ` : ""}
-                {shot.manuallyCorrected ? "Confermato da te. " : `Confidenza ${Math.round(shot.confidence * 100)}%. `}
-                {shot.example && <ExampleMark className="ml-1" />}
+                {shot.errorCause ? causeLabel[shot.errorCause] : ""}
+                {shot.manuallyCorrected ? " · a mano" : ` · ${Math.round(shot.confidence * 100)}%`}
+                {shot.example ? " · ESEMPIO" : ""}
               </p>
-              {shot.note && <p className="mt-1 text-xs text-mute">{shot.note}</p>}
             </article>
           </li>
         ))}
@@ -324,8 +291,7 @@ export function ReportView({
       </ul>
 
       {match.unclassifiedSegments.length > 0 && (
-        <Card>
-          <h2 className="font-display text-xl font-bold">Non classificato</h2>
+        <Fold title="Non classificato">
           <ul className="mt-2 space-y-2 text-sm">
             {match.unclassifiedSegments.map((segment) => (
               <li key={`${segment.t0}-${segment.note}`}>
@@ -336,7 +302,7 @@ export function ReportView({
               </li>
             ))}
           </ul>
-        </Card>
+        </Fold>
       )}
 
       <div className="no-print flex flex-wrap gap-2">
@@ -354,7 +320,7 @@ export function ReportView({
           Esporta PDF
         </Button>
       </div>
-      <p className="text-xs text-mute">{it.privacy} Il PDF usa la stampa del telefono: in Safari scegli «Salva PDF».</p>
+      <p className="text-xs text-mute">PDF: stampa del telefono. Il link non include il video.</p>
 
       {editing && onCorrect && (
         <EditSheet
@@ -386,21 +352,23 @@ function Tile({ label, value, hint, tone = "sand" }: { label: string; value: str
 function AdviceCard({
   item,
   onJump,
-  prominent = false,
 }: {
   item: { title: string; explanation: string; drill: string; success: string; count: number; t: number | null };
   onJump: (time: number | null) => void;
-  prominent?: boolean;
 }) {
   return (
-    <div className={prominent ? "mt-2" : ""}>
-      <h3 className="font-display text-2xl font-bold">{item.title}</h3>
-      <p className="mt-2 text-sm leading-relaxed text-sand/90">{item.explanation}</p>
-      <p className="mt-3 text-sm"><strong>Esercizio. </strong>{item.drill}</p>
-      <p className="mt-1 text-sm text-mute"><strong className="text-sand">Fatto quando: </strong>{item.success}</p>
+    <div className="border-t border-white/10 py-3 first:border-0 first:pt-0">
+      <p className="font-display text-xl font-bold">{item.title}</p>
+      <p className="text-sm text-mute">{item.count} colpi</p>
+      <details className="mt-1">
+        <summary className="min-h-11 cursor-pointer text-sm text-lime">Dettaglio</summary>
+        <p className="text-sm">{item.explanation}</p>
+        <p className="mt-2 text-sm">{item.drill}</p>
+        <p className="mt-1 text-sm text-mute">{item.success}</p>
+      </details>
       {item.t != null && (
-        <button type="button" className="mt-2 min-h-11 text-sm font-semibold text-lime" onClick={() => onJump(item.t)}>
-          Guarda il punto alle {formatTime(item.t)}
+        <button type="button" className="min-h-11 text-sm font-semibold text-lime" onClick={() => onJump(item.t)}>
+          {formatTime(item.t)}
         </button>
       )}
     </div>
@@ -458,13 +426,24 @@ function EditSheet({
             ))}
           </Select>
         </label>
-        <label className="block text-sm">Esito
-          <Select value={outcome} onChange={(event) => setOutcome(event.target.value as ShotOutcome)} className="mt-1">
-            {Object.keys(outcomeLabel).map((key) => (
-              <option key={key} value={key}>{outcomeLabel[key as ShotOutcome]}</option>
-            ))}
-          </Select>
-        </label>
+        <div className="grid grid-cols-3 gap-2">
+          {(
+            [
+              ["unforced_error", "Gratuito"],
+              ["forced_error", "Errore"],
+              ["winner", "Vincente"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setOutcome(value)}
+              className={`min-h-16 rounded-2xl px-2 text-sm font-semibold ${outcome === value ? "bg-lime text-ink" : "bg-white/5"}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         {error && (
           <>
             <label className="block text-sm">Motivo
@@ -490,8 +469,7 @@ function EditSheet({
             ))}
           </Select>
         </label>
-        <Button type="submit" className="w-full">Salva e ricalcola</Button>
-        <p className="text-xs text-mute">La correzione resta segnata e entra nell&apos;export, pronta se un giorno servirà per addestrare un modello. Qui non parte nessun addestramento.</p>
+        <Button type="submit" className="w-full">Salva</Button>
       </form>
     </div>
   );

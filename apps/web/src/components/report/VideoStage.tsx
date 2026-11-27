@@ -155,7 +155,7 @@ function draw(canvas: HTMLCanvasElement | null, match: Match, shots: Shot[], tim
   const toX = (value: number) => left + value * width;
   const toY = (value: number) => top + height - value * height;
   for (const shot of shots) {
-    ctx.fillStyle = shot.outcome === "winner" ? "#d6ff3f" : shot.outcome === "unforced_error" || shot.outcome === "forced_error" ? "#ff5d6c" : "#f4efe4";
+    ctx.fillStyle = shot.outcome === "winner" ? "#d6ff3f" : shot.outcome === "unforced_error" ? "#ff7a45" : shot.outcome === "forced_error" ? "#ff5d6c" : "#8aa399";
     ctx.globalAlpha = 0.35;
     ctx.beginPath();
     ctx.arc(toX(shot.impactX), toY(shot.impactY), 5, 0, Math.PI * 2);

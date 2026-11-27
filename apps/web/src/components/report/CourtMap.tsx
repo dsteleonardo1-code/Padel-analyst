@@ -64,7 +64,7 @@ export function CourtMap({ sport, shots, selectedId }: { sport: Sport; shots: Sh
         {mode !== "heat" &&
           shots.map((shot) => {
             const point = mode === "impact" ? { x: shot.impactX, y: shot.impactY } : { x: shot.landX, y: shot.landY };
-            const color = shot.outcome === "winner" ? "#d6ff3f" : shot.outcome === "unclassified" ? "#8fd0c4" : shot.outcome === "neutral" ? "#f4efe4" : "#ff5d6c";
+            const color = shot.outcome === "winner" ? "#d6ff3f" : shot.outcome === "unforced_error" ? "#ff7a45" : shot.outcome === "forced_error" ? "#ff5d6c" : "#8aa399";
             return <circle key={shot.id} cx={sx(point.x)} cy={sy(point.y)} r={shot.id === selectedId ? 2.4 : 1.5} fill={color} opacity={shot.id === selectedId ? 1 : 0.85} />;
           })}
         {selected && (
@@ -80,7 +80,7 @@ export function CourtMap({ sport, shots, selectedId }: { sport: Sport; shots: Sh
         )}
       </svg>
       <p className="mt-2 text-xs text-mute">
-        Verde: vincente. Corallo: errore. Sabbia: neutro. Acqua: non classificato.
+        Lime vincenti, arancio gratuiti, corallo errori.
         {selected ? ` Selezionato: ${outcomeLabel[selected.outcome]}.` : ""}
       </p>
     </div>

@@ -6,7 +6,8 @@ Branch di lavoro: `cursor/fondocampo-padel-tennis-7196`.
 
 ## Stato
 
-- Home: **Carica video** oppure **Prova con l'esempio**, poi scelta del giocatore (tocco o descrizione), poi scheda.
+- Barra: Home, Analizza, Profilo. Giocatori e Confronta restano raggiungibili dalla home.
+- Analizza un video è l'unico ingresso: carica oppure esempio, poi il giocatore, poi la scheda.
 - Scheda: video, timeline dei colpi, segno manuale (tipo, esito, zona, pressione, inizio/fine), totali, indice 0–100 solo con almeno 4 colpi classificati, grafici per tipo, mini-campo per zona, tre priorità con esercizio, clip.
 - Scheda `m-galan-errori`: un errore di Ale Galán visto nei fotogrammi dello spezzone Dailymotion `xa6xfe4` (0:20–2:50). Etichetta **Tag manuale**. Il file `apps/web/public/demo/galan-prova.mp4` è in `.gitignore` e non va committato.
 - L'indice e le percentuali restano vuoti se i colpi non bastano.

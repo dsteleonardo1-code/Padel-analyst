@@ -3,15 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { GitCompare, House, UserRound, Users, Video } from "lucide-react";
+import { House, UserRound, Video } from "lucide-react";
 import { it } from "@/lib/i18n";
 import { useStore } from "./Store";
 
 const links = [
   { href: "/", label: it.nav.home, icon: House },
   { href: "/analisi", label: it.nav.analyze, icon: Video },
-  { href: "/giocatori", label: it.nav.players, icon: Users },
-  { href: "/confronto", label: it.nav.compare, icon: GitCompare },
   { href: "/profilo", label: it.nav.profile, icon: UserRound },
 ];
 
@@ -39,9 +37,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span className="block font-display text-lg font-bold leading-none tracking-tight">{it.appName}</span>
             <span className="text-[10px] uppercase tracking-[0.22em] text-mute">Padel · Tennis</span>
           </span>
-        </Link>
-        <Link href="/profilo" className="press min-h-11 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-sand">
-          {it.nav.profile}
         </Link>
       </header>
       <main className="safe-page px-4">{ready ? children : <p className="py-16 text-center text-mute">Apro Fondocampo…</p>}</main>

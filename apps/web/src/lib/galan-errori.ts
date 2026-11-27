@@ -28,6 +28,7 @@ export function buildGalanErrorSheet(): { match: Match; rallies: Rally[]; shots:
       errorReason: "position",
       errorCause: "position",
       situation: "net",
+      zone: "net",
       confidence: 1,
       manuallyCorrected: true,
       serveNumber: null,

@@ -10,6 +10,7 @@ export function VideoStage({
   shots,
   videoUrl,
   onReady,
+  onTime,
   onPrev,
   onNext,
 }: {
@@ -17,6 +18,7 @@ export function VideoStage({
   shots: Shot[];
   videoUrl: string | null;
   onReady: (seek: (time: number) => void) => void;
+  onTime?: (time: number) => void;
   onPrev: () => void;
   onNext: () => void;
 }) {
@@ -26,7 +28,9 @@ export function VideoStage({
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
   const timeRef = useRef(0);
+  const onTimeRef = useRef(onTime);
   onReadyRef.current = onReady;
+  onTimeRef.current = onTime;
 
   useEffect(() => {
     onReadyRef.current((next) => {
@@ -51,6 +55,7 @@ export function VideoStage({
         const delta = (now - last) / 1000;
         timeRef.current = Math.min(match.durationSec, timeRef.current + delta);
         setTime(timeRef.current);
+        onTimeRef.current?.(timeRef.current);
         if (timeRef.current >= match.durationSec) setPlaying(false);
       }
       last = now;
@@ -71,7 +76,11 @@ export function VideoStage({
           playsInline
           preload="metadata"
           className="aspect-video w-full bg-black"
-          onTimeUpdate={(event) => setTime(event.currentTarget.currentTime)}
+          onTimeUpdate={(event) => {
+            const next = event.currentTarget.currentTime;
+            setTime(next);
+            onTimeRef.current?.(next);
+          }}
         />
       ) : (
         <canvas ref={canvasRef} width={640} height={360} className="aspect-video w-full bg-[#10241c]" />

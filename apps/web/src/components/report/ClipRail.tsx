@@ -4,7 +4,8 @@ import { ChevronLeft, ChevronRight, Play, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CLIP_AFTER, CLIP_BEFORE, clipWindow, exampleImpact, isHighlight } from "@/lib/clips";
 import { cx, formatTime } from "@/lib/format";
-import { outcomeLabel, shotLabel } from "@/lib/i18n";
+import { shotName } from "@/lib/analyst";
+import { outcomeLabel } from "@/lib/i18n";
 import type { Shot } from "@/lib/types";
 
 type RailFilter = "all" | "free" | "errors" | "winners";
@@ -166,7 +167,7 @@ export function ClipRail({ shots, videoUrl, example }: { shots: Shot[]; videoUrl
                 <span className={cx("text-xs font-bold", shot.outcome === "winner" ? "text-lime" : shot.outcome === "unforced_error" ? "text-clay" : "text-coral")}>
                   {outcomeLabel[shot.outcome]}
                 </span>
-                <span className="mt-0.5 block text-sm">{shotLabel[shot.type]}</span>
+                <span className="mt-0.5 block text-sm">{shotName(shot)}</span>
                 {shot.note && <span className="mt-1 line-clamp-4 block text-[11px] leading-snug text-sand">{shot.note}</span>}
                 <span className="text-[11px] text-mute">{formatTime(shot.tImpact)} · {CLIP_BEFORE}s+{CLIP_AFTER}s</span>
               </span>
@@ -194,7 +195,7 @@ export function ClipRail({ shots, videoUrl, example }: { shots: Shot[]; videoUrl
                 <ChevronLeft />
               </button>
               <div className="min-w-0 flex-1 text-center">
-                <p className="truncate font-semibold">{outcomeLabel[clips[open].outcome]} · {shotLabel[clips[open].type]}</p>
+                <p className="truncate font-semibold">{outcomeLabel[clips[open].outcome]} · {shotName(clips[open])}</p>
                 <p className="text-xs text-mute">{highlight ? "Highlight" : "Clip"} {open + 1}/{clips.length}</p>
                 {clips[open].note && <p className="mt-1 text-left text-xs leading-relaxed text-sand">{clips[open].note}</p>}
               </div>

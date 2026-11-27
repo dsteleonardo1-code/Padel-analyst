@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { demoVideo } from "@/lib/demo";
+import { isOnProfile } from "@/lib/stats";
 import { appPath } from "@/lib/format";
 import { deleteVideo, loadVideo } from "@/lib/storage";
 import { ReportView } from "./report/ReportView";
@@ -13,7 +14,7 @@ import { Button } from "./ui";
 export function MatchScreen() {
   const params = useSearchParams();
   const id = params.get("id") ?? "";
-  const { state, updateShot, setFocus, deleteMatch, saveToProfile } = useStore();
+  const { state, updateShot, addShot, setFocus, deleteMatch, saveToProfile } = useStore();
   const match = state.matches.find((item) => item.id === id);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
@@ -59,6 +60,8 @@ export function MatchScreen() {
               : videoUrl
         }
         onCorrect={updateShot}
+        onTag={addShot}
+        history={state.matches.filter(isOnProfile)}
         onFocus={(playerId) => setFocus(match.id, playerId)}
         onSaveToProfile={() => saveToProfile(match.id)}
       />

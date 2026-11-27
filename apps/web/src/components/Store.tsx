@@ -12,6 +12,7 @@ interface StoreApi {
   deletePlayer: (id: string) => void;
   upsertMatch: (match: Match, rallies: Rally[], shots: Shot[], job?: AnalysisJob) => void;
   updateShot: (shot: Shot) => void;
+  addShot: (shot: Shot, rally: Rally | null) => void;
   setFocus: (matchId: string, playerId: string) => void;
   deleteMatch: (id: string) => void;
   saveToProfile: (matchId: string) => void;
@@ -71,6 +72,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setState((current) => ({
         ...current,
         shots: current.shots.map((item) => (item.id === shot.id ? shot : item)),
+      })),
+    addShot: (shot, rally) =>
+      setState((current) => ({
+        ...current,
+        shots: [...current.shots, shot],
+        rallies: rally && !current.rallies.some((item) => item.id === rally.id) ? [...current.rallies, rally] : current.rallies,
       })),
     setFocus: (matchId, playerId) =>
       setState((current) => ({

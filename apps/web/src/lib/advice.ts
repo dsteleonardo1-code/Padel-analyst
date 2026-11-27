@@ -33,6 +33,7 @@ function drillFor(type: ShotType, reason: ErrorReason) {
 
 function clusterTitle(type: ShotType, reason: ErrorReason, share: number): string {
   const copy = drillFor(type, reason);
+  if (type === "unclassified") return drills[reason]?.title ?? copy.title;
   if (share >= 0.45 && drills[`${type}|${reason}`]) return copy.title;
   if (share >= 0.45) return `${shotLabel[type]}: ${reasonLabel[reason].toLowerCase()}`;
   return copy.title;

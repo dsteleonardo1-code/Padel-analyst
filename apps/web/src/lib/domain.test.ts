@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildAdvice } from "./advice";
+import { buildTaggedShot, phaseErrors, pressureErrors, previousSheet, shotZone, sidePoints, topPriorities, typeBoard, zoneBoard } from "./analyst";
 import { classifyHeuristic, detectImpacts, extractBlobs, greenRatio, groupByGap, motionMask } from "./analyze";
 import { clipWindow, exampleImpact } from "./clips";
 import { buildExampleData } from "./examples";
@@ -252,6 +253,75 @@ describe("share links", () => {
     expect(decoded.shots).toHaveLength(payload.shots.length);
     expect(decoded.shots[0].type).toBe(payload.shots[0].type);
     expect(decoded.shots[0].outcome).toBe(payload.shots[0].outcome);
+  });
+});
+
+describe("analyst sheet", () => {
+  it("does not invent a zone or a reason for a hand tag", () => {
+    const shot = buildTaggedShot({
+      id: "s1",
+      matchId: "m1",
+      rallyId: "r1",
+      playerId: "p1",
+      time: 12.4,
+      example: false,
+      type: "forehand",
+      outcome: "unforced_error",
+      zone: "baseline",
+      pressured: true,
+      phase: "end",
+    });
+    expect(shot.errorReason).toBeNull();
+    expect(shot.errorCause).toBeNull();
+    expect(shot.zone).toBe("baseline");
+    expect(shot.manuallyCorrected).toBe(true);
+    expect(shot.example).toBe(false);
+    expect(shotZone({ ...shot, zone: null, outcome: "unclassified", type: "unclassified", situation: "baseline" })).toBeNull();
+  });
+
+  it("keeps percentages hidden until three decided points", () => {
+    const shot = (id: string, zone: "net" | "baseline", outcome: "winner" | "unforced_error"): import("./types").Shot => ({
+      ...buildTaggedShot({
+        id,
+        matchId: "m1",
+        rallyId: id,
+        playerId: "p1",
+        time: 1,
+        example: true,
+        type: zone === "net" ? "forehand_volley" : "forehand",
+        outcome,
+        zone,
+        pressured: false,
+        phase: null,
+      }),
+    });
+    const rally = (id: string, winner: 1 | 2) => ({ id, matchId: "m1", number: 1, tStart: 0, tEnd: 2, winnerTeam: winner, serverTeam: null as 1 | 2 | null });
+    const few = sidePoints([shot("a", "net", "winner"), shot("b", "net", "unforced_error")], [rally("a", 1), rally("b", 2)], "p1");
+    expect(few.net.pct).toBeNull();
+    const enough = sidePoints(
+      [shot("a", "net", "winner"), shot("b", "net", "winner"), shot("c", "net", "unforced_error")],
+      [rally("a", 1), rally("b", 1), rally("c", 2)],
+      "p1",
+    );
+    expect(enough.net.played).toBe(3);
+    expect(enough.net.pct).toBeCloseTo(2 / 3);
+  });
+
+  it("reads the Galán hand tag and leaves the motion sheet unmarked", () => {
+    const data = buildExampleData();
+    const hand = data.shots.find((shot) => shot.id === "m-galan-errori-s1");
+    expect(hand && shotZone(hand)).toBe("net");
+    expect(pressureErrors(data.shots.filter((shot) => shot.matchId === "m-galan-errori")).tagged).toBe(false);
+    expect(phaseErrors(data.shots.filter((shot) => shot.matchId === "m-galan-errori")).observed).toBe(false);
+    const motion = data.shots.filter((shot) => shot.matchId === "m-galan");
+    expect(zoneBoard(motion)).toHaveLength(0);
+    expect(typeBoard(motion)).toHaveLength(0);
+    const luca = data.shots.filter((shot) => shot.matchId === "m-luca-1" && shot.playerId === "p-luca");
+    expect(typeBoard(luca).length).toBeGreaterThan(0);
+    expect(topPriorities(luca, "p-luca").length).toBeLessThanOrEqual(3);
+    expect(topPriorities(luca, "p-luca")[0]?.drill.length).toBeGreaterThan(10);
+    const saved = data.matches.filter((match) => match.saved);
+    expect(previousSheet(saved, saved.find((match) => match.id === "m-galan-errori")!)?.id).toBe("m-galan");
   });
 });
 

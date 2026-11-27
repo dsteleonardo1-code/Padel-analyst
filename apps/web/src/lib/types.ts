@@ -40,6 +40,8 @@ export type ErrorReason =
 
 export type ErrorCause = "technique" | "position" | "shot_selection" | "decision";
 export type Situation = "defense" | "attack" | "net" | "baseline" | "transition";
+export type CourtZone = "baseline" | "transition" | "net" | "wall";
+export type PointPhase = "start" | "middle" | "end";
 export type AnalysisSource = "example" | "browser_heuristic" | "local_api";
 export type BodySide = "forehand" | "backhand" | "overhead" | "unknown";
 
@@ -130,6 +132,12 @@ export interface Shot {
   errorReason: ErrorReason | null;
   errorCause: ErrorCause | null;
   situation: Situation | null;
+  /** Set only when someone marks the zone. Absent means it was not marked. */
+  zone?: CourtZone | null;
+  /** Set only when someone marks the shot as played under pressure. */
+  pressured?: boolean;
+  /** Set only when someone marks when in the point the shot happened. */
+  phase?: PointPhase | null;
   confidence: number;
   manuallyCorrected: boolean;
   serveNumber: 1 | 2 | null;

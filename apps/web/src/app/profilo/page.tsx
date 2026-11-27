@@ -7,7 +7,9 @@ import { useStore } from "@/components/Store";
 import { Banner, Button, ExampleMark, Fold, TextField } from "@/components/ui";
 import { formatDate, uid } from "@/lib/format";
 import { it } from "@/lib/i18n";
+import { previousSheet, sheetDelta, summarizeMatch } from "@/lib/analyst";
 import { gifted, isOnProfile, playerShots, summarize } from "@/lib/stats";
+import type { Match, Shot } from "@/lib/types";
 
 export default function ProfilePage() {
   const { state, setProfile, setApiBaseUrl, restoreExamples } = useStore();
@@ -56,6 +58,7 @@ export default function ProfilePage() {
                     {row.summary.unforced} · {row.summary.forced} · {row.summary.winners}
                   </p>
                   <p className="text-xs text-mute">{gifted(row.summary.unforced, row.summary.forced).line}</p>
+                  <CompareLine matches={saved} match={row.match} shots={state.shots} />
                 </Link>
               </li>
             ))}
@@ -85,5 +88,17 @@ export default function ProfilePage() {
       </Fold>
       {note && <Banner>{note}</Banner>}
     </div>
+  );
+}
+
+function CompareLine({ matches, match, shots }: { matches: Match[]; match: Match; shots: Shot[] }) {
+  const prior = previousSheet(matches, match);
+  if (!prior) return null;
+  const delta = sheetDelta(summarizeMatch(shots, match.focusPlayerId, match.id), summarizeMatch(shots, prior.focusPlayerId, prior.id));
+  const sign = (value: number) => `${value > 0 ? "+" : ""}${value}`;
+  return (
+    <p className="mt-1 text-xs text-mute">
+      vs prima · errori {sign(delta.errors)} · vincenti {sign(delta.winners)}
+    </p>
   );
 }

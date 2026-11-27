@@ -3,17 +3,20 @@
 import { Pencil, Share2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { buildAdvice } from "@/lib/advice";
+import { buildTaggedShot, placeZone, previousSheet, sheetDelta, shotName, summarizeMatch, topPriorities } from "@/lib/analyst";
 import { demoVideo } from "@/lib/demo";
 import { downloadText, shotsToCsv } from "@/lib/csv";
-import { appPath, cx, formatDelta, formatPct, formatTime } from "@/lib/format";
+import { appPath, cx, formatPct, formatTime, uid } from "@/lib/format";
 import { causeLabel, it, outcomeLabel, reasonLabel, shotLabel, situationLabel, sportLabel } from "@/lib/i18n";
 import { encodeShare } from "@/lib/share";
 import { isError, pairStats, playerShots, quarters, serveStats, summarize } from "@/lib/stats";
-import type { ErrorCause, ErrorReason, Match, Player, Rally, Shot, ShotOutcome, ShotType } from "@/lib/types";
+import type { CourtZone, ErrorCause, ErrorReason, Match, Player, PointPhase, Rally, Shot, ShotOutcome, ShotType } from "@/lib/types";
 import { ScoreTrio } from "../ScoreTrio";
 import { Banner, Button, ExampleMark, Fold, Select, SourceMark } from "../ui";
+import { AnalystBoard } from "./AnalystBoard";
 import { ClipRail } from "./ClipRail";
 import { CourtMap } from "./CourtMap";
+import { TagBar } from "./TagBar";
 import { VideoStage } from "./VideoStage";
 
 type Filter = "all" | "free" | "errors" | "winners" | "other";
@@ -27,6 +30,8 @@ export function ReportView({
   onCorrect,
   onFocus,
   onSaveToProfile,
+  onTag,
+  history = [],
   videoUrl = null,
 }: {
   match: Match;
@@ -37,6 +42,8 @@ export function ReportView({
   onCorrect?: (shot: Shot) => void;
   onFocus?: (playerId: string) => void;
   onSaveToProfile?: () => void;
+  onTag?: (shot: Shot, rally: Rally | null) => void;
+  history?: Match[];
   videoUrl?: string | null;
 }) {
   const focusId = match.focusPlayerId;
@@ -53,6 +60,10 @@ export function ReportView({
   const [selected, setSelected] = useState<string | null>(null);
   const [editing, setEditing] = useState<Shot | null>(null);
   const [notice, setNotice] = useState("");
+  const [clock, setClock] = useState(0);
+  const prior = previousSheet(history, match);
+  const delta = prior ? sheetDelta(summary, summarizeMatch(shots, prior.focusPlayerId, prior.id)) : null;
+  const priorities = topPriorities(mine, focusId);
   const seekRef = useState<{ fn: (time: number) => void }>({ fn: () => undefined })[0];
   const playback = videoUrl || (match.example ? demoVideo(match.sport).src : null);
 
@@ -111,9 +122,40 @@ export function ReportView({
         onReady={(fn) => {
           seekRef.fn = fn;
         }}
+        onTime={setClock}
         onPrev={() => stepRally(-1)}
         onNext={() => stepRally(1)}
       />
+      {!readOnly && onTag && (
+        <TagBar
+          time={clock}
+          onStamp={(stamp) => {
+            const cover = rallyList.find((rally) => clock >= rally.tStart && clock <= rally.tEnd);
+            const rally: Rally = cover ?? {
+              id: uid("r"),
+              matchId: match.id,
+              number: rallyList.length + 1,
+              tStart: Math.max(0, clock - 0.4),
+              tEnd: clock + 1.5,
+              winnerTeam: null,
+              serverTeam: stamp.type === "serve" ? 1 : null,
+            };
+            onTag(
+              buildTaggedShot({
+                id: uid("s"),
+                matchId: match.id,
+                rallyId: rally.id,
+                playerId: focusId,
+                time: clock,
+                example: match.example,
+                ...stamp,
+              }),
+              cover ? null : rally,
+            );
+            setNotice(`Segnato ${formatTime(clock)}`);
+          }}
+        />
+      )}
       <header className="flex items-start justify-between gap-3">
         <div>
           <h1 className="font-display text-3xl font-bold leading-none">{player?.name ?? "Giocatore"}</h1>
@@ -126,6 +168,15 @@ export function ReportView({
       {notice && <Banner tone="sand">{notice}</Banner>}
 
       <ScoreTrio unforced={summary.unforced} forced={summary.forced} winners={summary.winners} />
+      <AnalystBoard
+        match={match}
+        shots={mine}
+        rallies={rallyList}
+        playerId={focusId}
+        priorities={priorities}
+        delta={delta ? { errors: delta.errors, winners: delta.winners } : null}
+        onJump={jump}
+      />
       {!readOnly && onSaveToProfile && !match.saved && (
         <Button type="button" className="w-full" onClick={onSaveToProfile}>Salva nel mio profilo</Button>
       )}
@@ -173,13 +224,6 @@ export function ReportView({
             </div>
           ))}
         </div>
-      </Fold>
-
-      <Fold title="Cosa migliorare">
-        {advice.primary ? <AdviceCard item={advice.primary} onJump={jump} /> : <p className="text-sm text-mute">{it.unobserved}</p>}
-        {advice.secondary.map((item) => (
-          <AdviceCard key={item.key} item={item} onJump={jump} />
-        ))}
       </Fold>
 
       <Fold title="Cosa fai bene">
@@ -280,7 +324,7 @@ export function ReportView({
                 <button type="button" className="min-h-11 text-left" onClick={() => { setSelected(shot.id); jump(shot.tImpact); }}>
                   <span className="font-display text-lg font-bold text-lime">{formatTime(shot.tImpact)}</span>
                   <span className="mt-1 block text-sm">
-                    {shotLabel[shot.type]} · {outcomeLabel[shot.outcome]}
+                    {shotName(shot)} · {outcomeLabel[shot.outcome]}
                     {shot.errorReason ? ` · ${reasonLabel[shot.errorReason]}` : ""}
                   </span>
                 </button>
@@ -292,6 +336,7 @@ export function ReportView({
               </div>
               <p className="text-xs text-mute">
                 {shot.errorCause ? causeLabel[shot.errorCause] : ""}
+                {shot.pressured ? " · pressione" : ""}
                 {shot.manuallyCorrected ? " · a mano" : ` · ${Math.round(shot.confidence * 100)}%`}
                 {shot.example ? " · ESEMPIO" : ""}
               </p>
@@ -349,43 +394,6 @@ export function ReportView({
   );
 }
 
-function Tile({ label, value, hint, tone = "sand" }: { label: string; value: string; hint: string; tone?: "sand" | "lime" | "coral" }) {
-  const color = tone === "lime" ? "text-lime" : tone === "coral" ? "text-coral" : "text-sand";
-  return (
-    <div className="rounded-3xl border border-white/10 bg-pine p-3">
-      <p className="text-xs uppercase tracking-wide text-mute">{label}</p>
-      <p className={cx("font-display text-3xl font-bold", color)}>{value}</p>
-      <p className="text-xs text-mute">{hint}</p>
-    </div>
-  );
-}
-
-function AdviceCard({
-  item,
-  onJump,
-}: {
-  item: { title: string; explanation: string; drill: string; success: string; count: number; t: number | null };
-  onJump: (time: number | null) => void;
-}) {
-  return (
-    <div className="border-t border-white/10 py-3 first:border-0 first:pt-0">
-      <p className="font-display text-xl font-bold">{item.title}</p>
-      <p className="text-sm text-mute">{item.count} colpi</p>
-      <details className="mt-1">
-        <summary className="min-h-11 cursor-pointer text-sm text-lime">Dettaglio</summary>
-        <p className="text-sm">{item.explanation}</p>
-        <p className="mt-2 text-sm">{item.drill}</p>
-        <p className="mt-1 text-sm text-mute">{item.success}</p>
-      </details>
-      {item.t != null && (
-        <button type="button" className="min-h-11 text-sm font-semibold text-lime" onClick={() => onJump(item.t)}>
-          {formatTime(item.t)}
-        </button>
-      )}
-    </div>
-  );
-}
-
 function EditSheet({
   shot,
   players,
@@ -399,8 +407,11 @@ function EditSheet({
 }) {
   const [type, setType] = useState<ShotType>(shot.type);
   const [outcome, setOutcome] = useState<ShotOutcome>(shot.outcome);
-  const [reason, setReason] = useState<ErrorReason>(shot.errorReason ?? "net");
-  const [cause, setCause] = useState<ErrorCause>(shot.errorCause ?? "technique");
+  const [reason, setReason] = useState<ErrorReason | "">(shot.errorReason ?? "");
+  const [cause, setCause] = useState<ErrorCause | "">(shot.errorCause ?? "");
+  const [zone, setZone] = useState<CourtZone | "">(shot.zone ?? "");
+  const [pressured, setPressured] = useState(shot.pressured === true);
+  const [phase, setPhase] = useState<PointPhase | "">(shot.phase ?? "");
   const [playerId, setPlayerId] = useState(shot.playerId);
   const error = outcome === "unforced_error" || outcome === "forced_error";
 
@@ -411,17 +422,20 @@ function EditSheet({
         style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
         onSubmit={(event) => {
           event.preventDefault();
-          onSave({
+          const next: Shot = {
             ...shot,
             type,
             outcome,
-            errorReason: error ? reason : null,
-            errorCause: error ? cause : null,
+            errorReason: error && reason ? reason : null,
+            errorCause: error && cause ? cause : null,
+            pressured,
+            phase: phase || null,
             playerId,
             manuallyCorrected: true,
             confidence: 1,
             example: shot.example,
-          });
+          };
+          onSave(zone ? placeZone(next, zone) : next);
         }}
       >
         <div className="flex items-center justify-between">
@@ -458,14 +472,16 @@ function EditSheet({
         {error && (
           <>
             <label className="block text-sm">Motivo
-              <Select value={reason} onChange={(event) => setReason(event.target.value as ErrorReason)} className="mt-1">
+              <Select value={reason} onChange={(event) => setReason(event.target.value as ErrorReason | "")} className="mt-1">
+                <option value="">Non indicato</option>
                 {Object.keys(reasonLabel).map((key) => (
                   <option key={key} value={key}>{reasonLabel[key as ErrorReason]}</option>
                 ))}
               </Select>
             </label>
-            <label className="block text-sm">Causa probabile
-              <Select value={cause} onChange={(event) => setCause(event.target.value as ErrorCause)} className="mt-1">
+            <label className="block text-sm">Causa
+              <Select value={cause} onChange={(event) => setCause(event.target.value as ErrorCause | "")} className="mt-1">
+                <option value="">Non indicata</option>
                 {Object.keys(causeLabel).map((key) => (
                   <option key={key} value={key}>{causeLabel[key as ErrorCause]}</option>
                 ))}
@@ -473,6 +489,25 @@ function EditSheet({
             </label>
           </>
         )}
+        <div className="grid grid-cols-4 gap-2">
+          {(
+            [
+              ["baseline", "Fondo"],
+              ["transition", "Mezzo"],
+              ["net", "Rete"],
+              ["wall", "Parete"],
+            ] as const
+          ).map(([value, label]) => (
+            <button key={value} type="button" onClick={() => setZone(value)} className={`min-h-11 rounded-2xl text-sm font-semibold ${zone === value ? "bg-lime text-ink" : "bg-white/5"}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <button type="button" onClick={() => setPressured((value) => !value)} className={`min-h-11 rounded-full px-3 text-sm font-semibold ${pressured ? "bg-lime text-ink" : "bg-white/5"}`}>Pressione</button>
+          <button type="button" onClick={() => setPhase((value) => (value === "start" ? "" : "start"))} className={`min-h-11 rounded-full px-3 text-sm font-semibold ${phase === "start" ? "bg-lime text-ink" : "bg-white/5"}`}>Inizio</button>
+          <button type="button" onClick={() => setPhase((value) => (value === "end" ? "" : "end"))} className={`min-h-11 rounded-full px-3 text-sm font-semibold ${phase === "end" ? "bg-lime text-ink" : "bg-white/5"}`}>Fine</button>
+        </div>
         <label className="block text-sm">Giocatore
           <Select value={playerId} onChange={(event) => setPlayerId(event.target.value)} className="mt-1">
             {players.map((item) => (

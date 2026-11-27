@@ -51,7 +51,13 @@ export function MatchScreen() {
         shots={state.shots}
         rallies={state.rallies}
         players={state.players}
-        videoUrl={match.example ? demoVideo(match.sport).src : videoUrl}
+        videoUrl={
+          match.videoUrl
+            ? `${process.env.NEXT_PUBLIC_BASE_PATH || ""}${match.videoUrl}`
+            : match.example
+              ? demoVideo(match.sport).src
+              : videoUrl
+        }
         onCorrect={updateShot}
         onFocus={(playerId) => setFocus(match.id, playerId)}
         onSaveToProfile={() => saveToProfile(match.id)}

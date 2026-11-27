@@ -17,7 +17,10 @@ export function ClipRail({ shots, videoUrl, example }: { shots: Shot[]; videoUrl
   const [duration, setDuration] = useState(0);
   const modalRef = useRef<HTMLVideoElement>(null);
 
-  const pool = useMemo(() => shots.filter(isHighlight).sort((a, b) => a.tImpact - b.tImpact), [shots]);
+  const pool = useMemo(
+    () => shots.filter((shot) => isHighlight(shot) || shot.outcome === "unclassified").sort((a, b) => a.tImpact - b.tImpact),
+    [shots],
+  );
   const errorsOnly = useMemo(
     () => pool.filter((shot) => shot.outcome === "unforced_error" || shot.outcome === "forced_error"),
     [pool],

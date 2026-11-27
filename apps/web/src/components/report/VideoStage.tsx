@@ -116,13 +116,15 @@ export function VideoStage({
         </label>
       )}
       <p className="px-3 pb-3 text-[11px] text-mute">
-        {match.example
-          ? match.sport === "padel"
-            ? "ESEMPIO · Mixkit 877, licenza gratuita. Tennis, non la partita."
-            : "ESEMPIO · Mixkit 869, licenza gratuita. Non è la partita."
-          : videoUrl
-            ? "Video sul telefono."
-            : "Nessun video in questo link."}
+        {match.confidenceNote.startsWith("STIMA")
+          ? "STIMA · video di terzi, solo prova. Fonte sotto il nome."
+          : match.example
+            ? match.sport === "padel"
+              ? "ESEMPIO · Mixkit 877, licenza gratuita. Tennis, non la partita."
+              : "ESEMPIO · Mixkit 869, licenza gratuita. Non è la partita."
+            : videoUrl
+              ? "Video sul telefono."
+              : "Nessun video in questo link."}
       </p>
     </div>
   );

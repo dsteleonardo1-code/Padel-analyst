@@ -99,6 +99,14 @@ export function ExampleMark({ className }: { className?: string }) {
 }
 
 export function SourceMark({ source, example }: { source: AnalysisSource; example: boolean }) {
+  if (example && source === "browser_heuristic") {
+    return (
+      <span className="flex gap-1">
+        <ExampleMark />
+        <span className="rounded-full border border-clay/50 bg-clay/15 px-2 py-0.5 text-[11px] font-bold text-clay">{it.estimate}</span>
+      </span>
+    );
+  }
   if (example) return <ExampleMark />;
   if (source === "browser_heuristic") {
     return <span className="rounded-full border border-clay/50 bg-clay/15 px-2 py-0.5 text-[11px] font-bold text-clay">{it.estimate}</span>;

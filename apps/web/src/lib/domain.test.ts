@@ -127,7 +127,8 @@ describe("corrections and deltas", () => {
 
   it("keeps example sheets off the profile until saved", () => {
     const data = buildExampleData();
-    expect(data.matches.every((match) => !isOnProfile(match))).toBe(true);
+    expect(data.matches.filter((match) => match.id !== "m-galan").every((match) => !isOnProfile(match))).toBe(true);
+    expect(isOnProfile(data.matches.find((match) => match.id === "m-galan")!)).toBe(true);
     expect(isOnProfile({ ...data.matches[0], saved: true })).toBe(true);
     expect(readPlayerCue("quello con maglia rossa, lato sinistro, in basso").side).toBe("left");
   });
@@ -137,11 +138,14 @@ describe("corrections and deltas", () => {
     expect(gifted(4, 4).line).toBe("8 errori = 8 punti = 2 game regalati");
     expect(gifted(2, 1).line).toContain("meno di 1 game");
     const data = buildExampleData();
-    for (const match of data.matches) {
+    for (const match of data.matches.filter((item) => item.id !== "m-galan")) {
       const summary = summarize(playerShots(data.shots, match.focusPlayerId, match.id));
       expect(summary.unforced + summary.forced + summary.winners).toBeGreaterThan(0);
       expect(match.example).toBe(true);
     }
+    const galan = summarize(playerShots(data.shots, "p-galan", "m-galan"));
+    expect(galan.unforced + galan.forced + galan.winners).toBe(0);
+    expect(galan.unclassified).toBeGreaterThan(0);
   });
 
   it("colors an error drop as an improvement", () => {

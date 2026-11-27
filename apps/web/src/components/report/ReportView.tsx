@@ -118,6 +118,8 @@ export function ReportView({
         <div>
           <h1 className="font-display text-3xl font-bold leading-none">{player?.name ?? "Giocatore"}</h1>
           <p className="mt-1 text-sm text-mute">{match.score || sportLabel[match.sport]}</p>
+          {match.limitNote && <p className="mt-2 text-xs leading-relaxed text-mute">{match.limitNote}</p>}
+          {match.source !== "example" && <p className="mt-1 text-xs text-clay">{match.confidenceNote}</p>}
         </div>
         <SourceMark source={match.source} example={match.example} />
       </header>

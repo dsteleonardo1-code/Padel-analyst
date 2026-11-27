@@ -115,12 +115,14 @@ export function VideoStage({
           />
         </label>
       )}
-      <p className="px-3 pb-3 text-xs leading-relaxed text-mute">
+      <p className="px-3 pb-3 text-[11px] text-mute">
         {match.example
-          ? "Ricostruzione di esempio: non è un video reale. I pallini seguono i colpi dimostrativi."
+          ? match.sport === "padel"
+            ? "ESEMPIO · Mixkit 877, licenza gratuita. Tennis, non la partita."
+            : "ESEMPIO · Mixkit 869, licenza gratuita. Non è la partita."
           : videoUrl
-            ? "Video caricato, rimasto su questo telefono."
-            : "Ricostruzione dai colpi. Il file video non è in questo link."}
+            ? "Video sul telefono."
+            : "Nessun video in questo link."}
       </p>
     </div>
   );

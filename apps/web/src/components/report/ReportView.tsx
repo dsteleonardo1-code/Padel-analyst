@@ -3,6 +3,7 @@
 import { Pencil, Share2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { buildAdvice } from "@/lib/advice";
+import { demoVideo } from "@/lib/demo";
 import { downloadText, shotsToCsv } from "@/lib/csv";
 import { appPath, cx, formatDelta, formatPct, formatTime } from "@/lib/format";
 import { causeLabel, it, outcomeLabel, reasonLabel, shotLabel, situationLabel, sportLabel } from "@/lib/i18n";
@@ -11,6 +12,7 @@ import { isError, pairStats, playerShots, quarters, serveStats, summarize } from
 import type { ErrorCause, ErrorReason, Match, Player, Rally, Shot, ShotOutcome, ShotType } from "@/lib/types";
 import { ScoreTrio } from "../ScoreTrio";
 import { Banner, Button, ExampleMark, Fold, Select, SourceMark } from "../ui";
+import { ClipRail } from "./ClipRail";
 import { CourtMap } from "./CourtMap";
 import { VideoStage } from "./VideoStage";
 
@@ -50,6 +52,7 @@ export function ReportView({
   const [editing, setEditing] = useState<Shot | null>(null);
   const [notice, setNotice] = useState("");
   const seekRef = useState<{ fn: (time: number) => void }>({ fn: () => undefined })[0];
+  const playback = videoUrl || (match.example ? demoVideo(match.sport).src : null);
 
   const visible = mine.filter((shot) => {
     if (typeFilter !== "all" && shot.type !== typeFilter) return false;
@@ -98,7 +101,17 @@ export function ReportView({
   }
 
   return (
-    <div className="space-y-4 py-4">
+    <div className="space-y-4 py-3">
+      <VideoStage
+        match={match}
+        shots={mine}
+        videoUrl={playback}
+        onReady={(fn) => {
+          seekRef.fn = fn;
+        }}
+        onPrev={() => stepRally(-1)}
+        onNext={() => stepRally(1)}
+      />
       <header className="flex items-start justify-between gap-3">
         <div>
           <h1 className="font-display text-3xl font-bold leading-none">{player?.name ?? "Giocatore"}</h1>
@@ -108,18 +121,8 @@ export function ReportView({
       </header>
       {notice && <Banner tone="sand">{notice}</Banner>}
 
-      <VideoStage
-        match={match}
-        shots={mine}
-        videoUrl={videoUrl}
-        onReady={(fn) => {
-          seekRef.fn = fn;
-        }}
-        onPrev={() => stepRally(-1)}
-        onNext={() => stepRally(1)}
-      />
-
       <ScoreTrio unforced={summary.unforced} forced={summary.forced} winners={summary.winners} />
+      <ClipRail shots={mine} videoUrl={playback} example={match.example} />
 
       {others.length > 1 && onFocus && (
         <label className="block text-sm">

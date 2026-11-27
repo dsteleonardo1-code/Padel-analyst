@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { demoVideo } from "@/lib/demo";
 import { appPath } from "@/lib/format";
 import { deleteVideo, loadVideo } from "@/lib/storage";
 import { ReportView } from "./report/ReportView";
@@ -50,7 +51,7 @@ export function MatchScreen() {
         shots={state.shots}
         rallies={state.rallies}
         players={state.players}
-        videoUrl={videoUrl}
+        videoUrl={match.example ? demoVideo(match.sport).src : videoUrl}
         onCorrect={updateShot}
         onFocus={(playerId) => setFocus(match.id, playerId)}
       />

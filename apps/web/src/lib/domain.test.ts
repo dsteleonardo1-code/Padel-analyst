@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildAdvice } from "./advice";
 import { classifyHeuristic, detectImpacts, extractBlobs, greenRatio, groupByGap, motionMask } from "./analyze";
+import { clipWindow, exampleImpact } from "./clips";
 import { buildExampleData } from "./examples";
 import { judgeOutcome } from "./outcome";
 import { decodeShare, encodeShare } from "./share";
@@ -114,6 +115,13 @@ describe("corrections and deltas", () => {
     expect(after.errors).toBe(before.errors + 1);
     expect(after.winners).toBe(before.winners - 1);
     expect(shots.some((shot) => shot.manuallyCorrected)).toBe(true);
+  });
+
+  it("cuts a short clip around the impact", () => {
+    expect(clipWindow(10, 100)).toEqual({ start: 7, end: 12 });
+    expect(clipWindow(1, 100).start).toBe(0);
+    expect(clipWindow(99, 100).end).toBe(100);
+    expect(exampleImpact(0, 4, 20)).toBeLessThan(exampleImpact(3, 4, 20));
   });
 
   it("turns errors into points and games", () => {

@@ -10,6 +10,7 @@ Branch di lavoro: `cursor/fondocampo-padel-tennis-7196`.
 - Home: illustrazione del campo e un solo pulsante, Analizza un video. Al primo uso compare una riga: il video resta sul telefono.
 - Analizza è un wizard: 1 Video (carica o esempio), 2 Giocatore, 3 Scheda.
 - Segna un colpo parte già su dritto, errore e fondo: un tocco basta, si cambia solo se serve.
+- Intensità: sotto il video, una waveform di stanghette. L'altezza viene dal movimento misurato o da un colpo segnato. Senza dato la barra resta bassa e grigia. Il pulsante Intensità la apre a tutta larghezza. Il playhead colora le barre già viste.
 - Fisica: l'utente tocca i 4 angoli (campo 20×10 m, rete 0,88 m di riferimento) e il giocatore. Distanza, velocità, scatti, passi e salti sono STIME calcolate sul video; se il tracking non regge restano vuote. Sotto il video c'è la barra di intensità del movimento. Prova sul set Navarro, primi 20 secondi: 10,3 m, 10,1 km/h, 0 scatti, affidabilità 38%; i salti non sono stati mostrati. Sulla clip Galán (camera che cambia) il giocatore si perde e i numeri restano vuoti. Il calcolo salta nel video: il server statico deve rispondere ai Range, altrimenti il browser non può spostare il playhead.
 - Clip: inizio/fine, rivedi, elimina, e il calcolo fisico può usare solo le clip segnate «In analisi».
 - Un errore apre il punto intero (rally), non solo i secondi intorno all'impatto.

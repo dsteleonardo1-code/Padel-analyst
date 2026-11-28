@@ -248,7 +248,9 @@ export function ReportView({
       <ShotTimeline shots={mine} duration={match.durationSec} time={clock} onSeek={jump} />
       <HeatStrip
         points={strip?.points ?? []}
+        shots={mine}
         duration={match.durationSec}
+        time={clock}
         onSeek={jump}
         busy={busy}
         onBuild={() => runSample(false)}

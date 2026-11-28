@@ -2,7 +2,8 @@
 
 import { ChevronLeft, ChevronRight, Play, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CLIP_AFTER, CLIP_BEFORE, clipWindow, exampleImpact, isHighlight } from "@/lib/clips";
+import { CLIP_AFTER, CLIP_BEFORE, clipWindow, exampleImpact, isHighlight, playSpan } from "@/lib/clips";
+import type { Rally } from "@/lib/types";
 import { cx, formatTime } from "@/lib/format";
 import { shotName } from "@/lib/analyst";
 import { outcomeLabel } from "@/lib/i18n";
@@ -10,7 +11,7 @@ import type { Shot } from "@/lib/types";
 
 type RailFilter = "all" | "free" | "errors" | "winners";
 
-export function ClipRail({ shots, videoUrl, example }: { shots: Shot[]; videoUrl: string | null; example: boolean }) {
+export function ClipRail({ shots, videoUrl, example, rallies = [] }: { shots: Shot[]; videoUrl: string | null; example: boolean; rallies?: Rally[] }) {
   const [filter, setFilter] = useState<RailFilter>("all");
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
   const [open, setOpen] = useState<number | null>(null);
@@ -41,7 +42,9 @@ export function ClipRail({ shots, videoUrl, example }: { shots: Shot[]; videoUrl
 
   const boundsOf = (shot: Shot, index: number) => {
     const impact = impactOf(shot, index, clips.length, duration || (example ? 15 : shot.tImpact));
-    return clipWindow(impact, duration || impact + CLIP_AFTER);
+    const rally = rallies.find((item) => item.id === shot.rallyId) ?? null;
+    const real = !example || shot.manuallyCorrected;
+    return playSpan({ outcome: shot.outcome, tImpact: impact, real }, rally, duration || impact + CLIP_AFTER);
   };
 
   useEffect(() => {
@@ -67,8 +70,11 @@ export function ClipRail({ shots, videoUrl, example }: { shots: Shot[]; videoUrl
       const next: Record<string, string> = {};
       for (let index = 0; index < Math.min(clips.length, 18); index += 1) {
         if (cancel || !ctx) return;
-        const range = clipWindow(
-          impactOf(clips[index], index, clips.length, video.duration || 15),
+        const shot = clips[index];
+        const rally = rallies.find((item) => item.id === shot.rallyId) ?? null;
+        const range = playSpan(
+          { outcome: shot.outcome, tImpact: impactOf(shot, index, clips.length, video.duration || 15), real: !example || shot.manuallyCorrected },
+          rally,
           video.duration || 15,
         );
         video.currentTime = Math.min(Math.max(0, (video.duration || range.start) - 0.05), range.start + 0.35);
@@ -115,7 +121,7 @@ export function ClipRail({ shots, videoUrl, example }: { shots: Shot[]; videoUrl
     setOpen(index);
     const video = modalRef.current;
     if (!video) return;
-    const range = clipWindow(impactOf(shot, index, list.length, duration || 15), duration || shot.tImpact + CLIP_AFTER);
+    const range = boundsOf(shot, index);
     video.currentTime = range.start;
     video.play().catch(() => undefined);
   }
@@ -196,7 +202,11 @@ export function ClipRail({ shots, videoUrl, example }: { shots: Shot[]; videoUrl
               </button>
               <div className="min-w-0 flex-1 text-center">
                 <p className="truncate font-semibold">{outcomeLabel[clips[open].outcome]} · {shotName(clips[open])}</p>
-                <p className="text-xs text-mute">{highlight ? "Highlight" : "Clip"} {open + 1}/{clips.length}</p>
+                <p className="text-xs text-mute">
+                  {(clips[open].outcome === "forced_error" || clips[open].outcome === "unforced_error") && (!example || clips[open].manuallyCorrected)
+                    ? "Punto intero"
+                    : highlight ? "Highlight" : "Clip"} {open + 1}/{clips.length}
+                </p>
                 {clips[open].note && <p className="mt-1 text-left text-xs leading-relaxed text-sand">{clips[open].note}</p>}
               </div>
               <button type="button" className="grid h-11 w-11 place-items-center rounded-full bg-white/10" aria-label="Clip successiva" onClick={() => setOpen(Math.min(clips.length - 1, open + 1))}>

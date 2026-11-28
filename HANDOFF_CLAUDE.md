@@ -10,6 +10,10 @@ Branch di lavoro: `cursor/fondocampo-padel-tennis-7196`.
 - Home: illustrazione del campo e un solo pulsante, Analizza un video. Al primo uso compare una riga: il video resta sul telefono.
 - Analizza è un wizard: 1 Video (carica o esempio), 2 Giocatore, 3 Scheda.
 - Segna un colpo parte già su dritto, errore e fondo: un tocco basta, si cambia solo se serve.
+- Fisica: l'utente tocca i 4 angoli (campo 20×10 m, rete 0,88 m di riferimento) e il giocatore. Distanza, velocità, scatti, passi e salti sono STIME calcolate sul video; se il tracking non regge restano vuote. Sotto il video c'è la barra di intensità del movimento. Prova sul set Navarro, primi 20 secondi: 10,3 m, 10,1 km/h, 0 scatti, affidabilità 38%; i salti non sono stati mostrati. Sulla clip Galán (camera che cambia) il giocatore si perde e i numeri restano vuoti. Il calcolo salta nel video: il server statico deve rispondere ai Range, altrimenti il browser non può spostare il playhead.
+- Clip: inizio/fine, rivedi, elimina, e il calcolo fisico può usare solo le clip segnate «In analisi».
+- Un errore apre il punto intero (rally), non solo i secondi intorno all'impatto.
+- Export: PDF dalla stampa del telefono, immagine condivisibile con i numeri tattici e, se ci sono, quelli fisici.
 - Scheda: video, timeline dei colpi, segno manuale (tipo, esito, zona, pressione, inizio/fine), totali, indice 0–100 solo con almeno 4 colpi classificati, grafici per tipo, mini-campo per zona, tre priorità con esercizio, clip.
 - Scheda `m-galan-errori`: un errore di Ale Galán visto nei fotogrammi dello spezzone Dailymotion `xa6xfe4` (0:20–2:50). Etichetta **Tag manuale**. Il file `apps/web/public/demo/galan-prova.mp4` è in `.gitignore` e non va committato.
 - Scheda `m-navarro-set`: set 1 intero di Company/Escalante contro Allemandi/Navarro, World Padel Tour Lisboa, Dailymotion `x273mqn`. Paquito Navarro è identificato dalla scritta sulla maglia. Nessun colpo pre-segnato: la camera fissa non mostra il risultato della palla. Il video `lisboa-set.mp4` è in `.gitignore`. Ale Galán non compare nelle partite intere scaricabili da qui (su Dailymotion le sue finali Premier Padel sono highlights).

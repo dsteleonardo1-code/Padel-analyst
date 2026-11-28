@@ -4,18 +4,22 @@ import { ImageDown, Pencil, Share2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { buildAdvice } from "@/lib/advice";
 import { buildTaggedShot, matchRating, placeZone, previousSheet, sheetDelta, shotName, summarizeMatch, topPriorities } from "@/lib/analyst";
+import { summarizeTrack } from "@/lib/physical";
+import { sampleVideo } from "@/lib/sampleVideo";
 import { demoVideo } from "@/lib/demo";
 import { downloadText, shotsToCsv } from "@/lib/csv";
 import { appPath, cx, formatPct, formatTime, uid } from "@/lib/format";
 import { causeLabel, it, outcomeLabel, reasonLabel, shotLabel, situationLabel, sportLabel } from "@/lib/i18n";
 import { encodeShare } from "@/lib/share";
 import { isError, pairStats, playerShots, quarters, serveStats, summarize } from "@/lib/stats";
-import type { CourtZone, ErrorCause, ErrorReason, Match, Player, PointPhase, Rally, Shot, ShotOutcome, ShotType } from "@/lib/types";
+import type { CourtCalibration, CourtZone, ErrorCause, ErrorReason, IntensityStrip, Match, PhysicalReport, Player, PointPhase, Rally, Shot, ShotOutcome, ShotType, UserClip } from "@/lib/types";
 import { ScoreTrio } from "../ScoreTrio";
 import { Banner, Button, ExampleMark, Fold, Select, SourceMark } from "../ui";
 import { AnalystBoard } from "./AnalystBoard";
 import { ClipRail } from "./ClipRail";
 import { CourtMap } from "./CourtMap";
+import { FieldTools } from "./FieldTools";
+import { HeatStrip } from "./HeatStrip";
 import { ShotTimeline } from "./ShotTimeline";
 import { TagBar } from "./TagBar";
 import { VideoStage } from "./VideoStage";
@@ -33,6 +37,16 @@ export function ReportView({
   onSaveToProfile,
   onTag,
   history = [],
+  clips = [],
+  calibration = null,
+  physical = null,
+  strip = null,
+  onSaveClip,
+  onDeleteClip,
+  onToggleClip,
+  onSaveCalibration,
+  onSavePhysical,
+  onSaveStrip,
   videoUrl = null,
 }: {
   match: Match;
@@ -45,6 +59,16 @@ export function ReportView({
   onSaveToProfile?: () => void;
   onTag?: (shot: Shot, rally: Rally | null) => void;
   history?: Match[];
+  clips?: UserClip[];
+  calibration?: CourtCalibration | null;
+  physical?: PhysicalReport | null;
+  strip?: IntensityStrip | null;
+  onSaveClip?: (clip: UserClip) => void;
+  onDeleteClip?: (id: string) => void;
+  onToggleClip?: (id: string) => void;
+  onSaveCalibration?: (calibration: CourtCalibration) => void;
+  onSavePhysical?: (report: PhysicalReport) => void;
+  onSaveStrip?: (strip: IntensityStrip) => void;
   videoUrl?: string | null;
 }) {
   const focusId = match.focusPlayerId;
@@ -62,6 +86,10 @@ export function ReportView({
   const [editing, setEditing] = useState<Shot | null>(null);
   const [notice, setNotice] = useState("");
   const [clock, setClock] = useState(0);
+  const [tapMode, setTapMode] = useState<"corners" | "player" | null>(null);
+  const [corners, setCorners] = useState(calibration?.corners ?? []);
+  const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState(0);
   const prior = previousSheet(history, match);
   const delta = prior ? sheetDelta(summary, summarizeMatch(shots, prior.focusPlayerId, prior.id)) : null;
   const priorities = topPriorities(mine, focusId);
@@ -78,6 +106,93 @@ export function ReportView({
     return true;
   });
   const rallyList = rallies.filter((rally) => rally.matchId === match.id).sort((a, b) => a.number - b.number);
+
+  function onFrameTap(point: { x: number; y: number }) {
+    if (tapMode === "corners") {
+      const next = [...corners, point];
+      setCorners(next);
+      if (next.length >= 4) {
+        onSaveCalibration?.({ matchId: match.id, corners: next.slice(0, 4), player: calibration?.player ?? null });
+        setTapMode(null);
+      }
+      return;
+    }
+    if (tapMode === "player") {
+      onSaveCalibration?.({ matchId: match.id, corners: calibration?.corners?.length === 4 ? calibration.corners : corners, player: point });
+      setTapMode(null);
+    }
+  }
+
+  async function runSample(physicalPass: boolean) {
+    if (!playback) return;
+    setBusy(true);
+    setProgress(0);
+    const chosen = clips.filter((clip) => clip.selected);
+    const span = match.durationSec || 30;
+    const ranges = physicalPass && chosen.length
+      ? chosen.map((clip) => ({ t0: clip.t0, t1: clip.t1 }))
+      : [{ t0: 0, t1: physicalPass ? Math.min(span, 12) : Math.min(span, 90) }];
+    const step = physicalPass ? 0.8 : Math.max(1, Math.min(span, 90) / 40);
+    const video = document.querySelector("#stage video");
+    if (!(video instanceof HTMLVideoElement) || !video.videoWidth) {
+      onSavePhysical?.({
+        matchId: match.id,
+        distanceM: null,
+        maxSpeedMps: null,
+        sprints: null,
+        steps: null,
+        jumps: null,
+        lock: 0,
+        samples: 0,
+        note: "Il video non ha un fotogramma leggibile. Numeri lasciati vuoti.",
+      });
+      setBusy(false);
+      return;
+    }
+    try {
+      const result = await sampleVideo({
+        video,
+        ranges,
+        step,
+        corners: physicalPass ? calibration?.corners ?? null : null,
+        player: physicalPass ? calibration?.player ?? null : null,
+        onProgress: setProgress,
+      });
+      onSaveStrip?.({ matchId: match.id, points: result.intensity });
+      if (physicalPass) {
+        const summary = summarizeTrack(result.samples);
+        const scope = chosen.length ? "Calcolo sulle clip scelte." : "Calcolo sui primi 12 secondi.";
+        const locked = result.samples.filter((sample) => sample.locked).length;
+        onSavePhysical?.({
+          matchId: match.id,
+          distanceM: summary?.distanceM ?? null,
+          maxSpeedMps: summary?.maxSpeedMps ?? null,
+          sprints: summary?.sprints ?? null,
+          steps: summary?.steps ?? null,
+          jumps: summary?.jumps ?? null,
+          lock: summary?.lock ?? (result.samples.length ? locked / result.samples.length : 0),
+          samples: summary?.samples ?? result.samples.length,
+          note: `${summary?.note ?? `Tracciamento insufficiente (${locked}/${result.samples.length}). Numeri lasciati vuoti.`} ${scope}`,
+        });
+      }
+    } catch {
+      if (physicalPass) {
+        onSavePhysical?.({
+          matchId: match.id,
+          distanceM: null,
+          maxSpeedMps: null,
+          sprints: null,
+          steps: null,
+          jumps: null,
+          lock: 0,
+          samples: 0,
+          note: "Calcolo interrotto. Numeri lasciati vuoti.",
+        });
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
 
   function jump(time: number | null) {
     if (time == null) return;
@@ -127,8 +242,17 @@ export function ReportView({
         onTime={setClock}
         onPrev={() => stepRally(-1)}
         onNext={() => stepRally(1)}
+        tapLabel={tapMode === "corners" ? `Angolo ${corners.length + 1} di 4` : tapMode === "player" ? "Tocca il giocatore" : null}
+        onTap={tapMode ? onFrameTap : undefined}
       />
       <ShotTimeline shots={mine} duration={match.durationSec} time={clock} onSeek={jump} />
+      <HeatStrip
+        points={strip?.points ?? []}
+        duration={match.durationSec}
+        onSeek={jump}
+        busy={busy}
+        onBuild={() => runSample(false)}
+      />
       {!readOnly && onTag && (
         <TagBar
           time={clock}
@@ -194,7 +318,23 @@ export function ReportView({
         <Button type="button" className="w-full" onClick={onSaveToProfile}>Salva nel mio profilo</Button>
       )}
       {match.saved && <p className="text-center text-sm text-lime">Nel tuo profilo</p>}
-      <ClipRail shots={mine} videoUrl={playback} example={match.example} />
+      <FieldTools
+        time={clock}
+        clips={clips}
+        calibration={calibration}
+        report={physical}
+        busy={busy}
+        progress={progress}
+        onMarkIn={() => undefined}
+        onSaveClip={(t0, t1) => onSaveClip?.({ id: uid("c"), matchId: match.id, t0, t1, selected: true })}
+        onDeleteClip={(id) => onDeleteClip?.(id)}
+        onToggleClip={(id) => onToggleClip?.(id)}
+        onPlay={(t0) => jump(t0)}
+        onStartCorners={() => { setCorners([]); setTapMode("corners"); }}
+        onStartPlayer={() => setTapMode("player")}
+        onRun={() => runSample(true)}
+      />
+      <ClipRail shots={mine} videoUrl={playback} example={match.example} rallies={rallyList} />
 
       {others.length > 1 && onFocus && (
         <label className="block text-sm">
@@ -388,6 +528,14 @@ export function ReportView({
           line: rating?.line ?? "Pochi colpi classificati",
           example: match.example,
           manual: match.confidenceNote.includes("colpi segnati a mano"),
+          extra: physical
+            ? [
+                physical.distanceM != null ? `Distanza ${physical.distanceM} m` : "Distanza —",
+                physical.maxSpeedMps != null ? `Velocità ${(physical.maxSpeedMps * 3.6).toFixed(1)} km/h` : "Velocità —",
+                physical.sprints != null ? `Scatti ${physical.sprints}` : "Scatti —",
+                "STIMA",
+              ]
+            : ["Fisica non calcolata"],
         }).then((shared) => setNotice(shared ? "Scheda condivisa." : "Immagine salvata.")).catch(() => setNotice("Immagine non creata."))}>
           <ImageDown size={16} /> Immagine
         </Button>
@@ -430,6 +578,7 @@ async function shareImage(card: {
   line: string;
   example: boolean;
   manual: boolean;
+  extra?: string[];
 }): Promise<boolean> {
   const canvas = document.createElement("canvas");
   canvas.width = 1080;
@@ -471,7 +620,10 @@ async function shareImage(card: {
   ctx.fillStyle = "#d6ff3f";
   ctx.font = "700 28px sans-serif";
   const marks = [card.example ? "ESEMPIO" : "", card.manual ? "TAG MANUALE" : ""].filter(Boolean).join("  ·  ");
-  if (marks) ctx.fillText(marks, 72, 1240);
+  if (marks) ctx.fillText(marks, 72, 1180);
+  ctx.fillStyle = "#f4efe4";
+  ctx.font = "600 32px sans-serif";
+  (card.extra ?? []).slice(0, 4).forEach((line, index) => ctx.fillText(line, 72, 1240 + index * 40));
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
   if (!blob) throw new Error("png");
   const file = new File([blob], "fondocampo.png", { type: "image/png" });

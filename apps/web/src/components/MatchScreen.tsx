@@ -14,7 +14,7 @@ import { Button } from "./ui";
 export function MatchScreen() {
   const params = useSearchParams();
   const id = params.get("id") ?? "";
-  const { state, updateShot, addShot, setFocus, deleteMatch, saveToProfile } = useStore();
+  const { state, updateShot, addShot, setFocus, deleteMatch, saveToProfile, saveClip, deleteClip, toggleClip, saveCalibration, savePhysical, saveStrip } = useStore();
   const match = state.matches.find((item) => item.id === id);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
@@ -62,6 +62,16 @@ export function MatchScreen() {
         onCorrect={updateShot}
         onTag={addShot}
         history={state.matches.filter(isOnProfile)}
+        clips={(state.clips ?? []).filter((clip) => clip.matchId === match.id)}
+        calibration={(state.calibrations ?? []).find((item) => item.matchId === match.id) ?? null}
+        physical={(state.physical ?? []).find((item) => item.matchId === match.id) ?? null}
+        strip={(state.strips ?? []).find((item) => item.matchId === match.id) ?? null}
+        onSaveClip={saveClip}
+        onDeleteClip={deleteClip}
+        onToggleClip={toggleClip}
+        onSaveCalibration={saveCalibration}
+        onSavePhysical={savePhysical}
+        onSaveStrip={saveStrip}
         onFocus={(playerId) => setFocus(match.id, playerId)}
         onSaveToProfile={() => saveToProfile(match.id)}
       />

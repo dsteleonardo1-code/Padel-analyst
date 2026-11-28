@@ -145,6 +145,38 @@ export interface Shot {
   note: string;
 }
 
+export interface UserClip {
+  id: string;
+  matchId: string;
+  t0: number;
+  t1: number;
+  selected: boolean;
+}
+
+export interface CourtCalibration {
+  matchId: string;
+  /** Image points, 0–1, in order: near-left, near-right, far-right, far-left. */
+  corners: Array<{ x: number; y: number }>;
+  player: { x: number; y: number } | null;
+}
+
+export interface PhysicalReport {
+  matchId: string;
+  distanceM: number | null;
+  maxSpeedMps: number | null;
+  sprints: number | null;
+  steps: number | null;
+  jumps: number | null;
+  lock: number;
+  samples: number;
+  note: string;
+}
+
+export interface IntensityStrip {
+  matchId: string;
+  points: Array<{ t: number; e: number }>;
+}
+
 export interface AnalysisJob {
   id: string;
   matchId: string;
@@ -163,6 +195,10 @@ export interface AppState {
   rallies: Rally[];
   shots: Shot[];
   jobs: AnalysisJob[];
+  clips: UserClip[];
+  calibrations: CourtCalibration[];
+  physical: PhysicalReport[];
+  strips: IntensityStrip[];
   apiBaseUrl: string;
 }
 

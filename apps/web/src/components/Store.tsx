@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { emptyUserState, loadState, resetExamples, saveState } from "@/lib/storage";
-import type { AnalysisJob, AppState, Match, Player, Rally, Shot, UserProfile } from "@/lib/types";
+import type { AnalysisJob, AppState, CourtCalibration, IntensityStrip, Match, PhysicalReport, Player, Rally, Shot, UserClip, UserProfile } from "@/lib/types";
 
 interface StoreApi {
   ready: boolean;
@@ -19,6 +19,12 @@ interface StoreApi {
   restoreExamples: () => void;
   setApiBaseUrl: (url: string) => void;
   updateJob: (job: AnalysisJob) => void;
+  saveClip: (clip: UserClip) => void;
+  deleteClip: (id: string) => void;
+  toggleClip: (id: string) => void;
+  saveCalibration: (calibration: CourtCalibration) => void;
+  savePhysical: (report: PhysicalReport) => void;
+  saveStrip: (strip: IntensityStrip) => void;
 }
 
 const StoreContext = createContext<StoreApi | null>(null);
@@ -99,8 +105,35 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           rallies: current.rallies.filter((item) => item.matchId !== id),
           shots: current.shots.filter((item) => item.matchId !== id),
           jobs: current.jobs.filter((item) => item.matchId !== id),
+          clips: (current.clips ?? []).filter((item) => item.matchId !== id),
+          calibrations: (current.calibrations ?? []).filter((item) => item.matchId !== id),
+          physical: (current.physical ?? []).filter((item) => item.matchId !== id),
+          strips: (current.strips ?? []).filter((item) => item.matchId !== id),
         };
       }),
+    saveClip: (clip) =>
+      setState((current) => ({ ...current, clips: [...(current.clips ?? []).filter((item) => item.id !== clip.id), clip] })),
+    deleteClip: (id) => setState((current) => ({ ...current, clips: (current.clips ?? []).filter((item) => item.id !== id) })),
+    toggleClip: (id) =>
+      setState((current) => ({
+        ...current,
+        clips: (current.clips ?? []).map((item) => (item.id === id ? { ...item, selected: !item.selected } : item)),
+      })),
+    saveCalibration: (calibration) =>
+      setState((current) => ({
+        ...current,
+        calibrations: [...(current.calibrations ?? []).filter((item) => item.matchId !== calibration.matchId), calibration],
+      })),
+    savePhysical: (report) =>
+      setState((current) => ({
+        ...current,
+        physical: [...(current.physical ?? []).filter((item) => item.matchId !== report.matchId), report],
+      })),
+    saveStrip: (strip) =>
+      setState((current) => ({
+        ...current,
+        strips: [...(current.strips ?? []).filter((item) => item.matchId !== strip.matchId), strip],
+      })),
     restoreExamples: () => setState((current) => resetExamples(current)),
     setApiBaseUrl: (url) => setState((current) => ({ ...current, apiBaseUrl: url })),
     updateJob: (job) =>

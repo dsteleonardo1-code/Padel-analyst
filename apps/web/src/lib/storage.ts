@@ -2,6 +2,16 @@ import { buildExampleData } from "./examples";
 import { DATA_VERSION } from "./types";
 import type { AppState, Player } from "./types";
 
+function withCollections(state: AppState): AppState {
+  return {
+    ...state,
+    clips: state.clips ?? [],
+    calibrations: state.calibrations ?? [],
+    physical: state.physical ?? [],
+    strips: state.strips ?? [],
+  };
+}
+
 export const STORAGE_KEY = "fondocampo.v1";
 
 export function emptyUserState(): AppState {
@@ -14,6 +24,10 @@ export function emptyUserState(): AppState {
     rallies: examples.rallies,
     shots: examples.shots,
     jobs: [],
+    clips: [],
+    calibrations: [],
+    physical: [],
+    strips: [],
     apiBaseUrl: "",
   };
 }
@@ -43,14 +57,15 @@ export function mergeWithExamples(state: AppState): AppState {
     state.matches.filter((match) => match.example && exampleMatchIds.has(match.id)).map((match) => match.id),
   );
   const replaceExamples = state.version !== DATA_VERSION || keptExampleMatchIds.size !== exampleMatchIds.size;
-  if (!replaceExamples) return interruptJobs({ ...state, version: DATA_VERSION });
+  const base = withCollections(state);
+  if (!replaceExamples) return interruptJobs({ ...base, version: DATA_VERSION });
   return interruptJobs({
-    ...state,
+    ...base,
     version: DATA_VERSION,
     players: [...examples.players, ...userPlayers],
     matches: [...examples.matches, ...userMatches],
-    rallies: [...examples.rallies, ...state.rallies.filter((rally) => userMatchIds.has(rally.matchId))],
-    shots: [...examples.shots, ...state.shots.filter((shot) => userMatchIds.has(shot.matchId))],
+    rallies: [...examples.rallies, ...base.rallies.filter((rally) => userMatchIds.has(rally.matchId))],
+    shots: [...examples.shots, ...base.shots.filter((shot) => userMatchIds.has(shot.matchId))],
   });
 }
 
@@ -59,7 +74,7 @@ export function parseState(raw: string | null): AppState {
   try {
     const parsed = JSON.parse(raw) as unknown;
     if (!isRecord(parsed) || !Array.isArray(parsed.players) || !Array.isArray(parsed.matches)) return emptyUserState();
-    return mergeWithExamples(parsed as unknown as AppState);
+    return mergeWithExamples(withCollections(parsed as unknown as AppState));
   } catch {
     return emptyUserState();
   }
@@ -87,6 +102,10 @@ export function resetExamples(state: AppState): AppState {
     matches: [...examples.matches, ...userMatches],
     rallies: [...examples.rallies, ...state.rallies.filter((rally) => userIds.has(rally.matchId))],
     shots: [...examples.shots, ...state.shots.filter((shot) => userIds.has(shot.matchId))],
+    clips: state.clips ?? [],
+    calibrations: state.calibrations ?? [],
+    physical: state.physical ?? [],
+    strips: state.strips ?? [],
   };
 }
 

@@ -18,6 +18,22 @@ export function exampleImpact(index: number, total: number, duration: number): n
   return margin + (index / (total - 1)) * Math.max(0, length - margin * 2);
 }
 
+/** Errors open the whole rally. Winners stay on the short window around the impact. */
+export function playSpan(
+  shot: { outcome: string; tImpact: number; real: boolean },
+  rally: { tStart: number; tEnd: number } | null,
+  duration: number,
+): { start: number; end: number } {
+  const error = shot.outcome === "unforced_error" || shot.outcome === "forced_error";
+  if (shot.real && error && rally && rally.tEnd - rally.tStart >= 0.4) {
+    return {
+      start: Math.max(0, rally.tStart),
+      end: Math.min(duration || rally.tEnd, rally.tEnd),
+    };
+  }
+  return clipWindow(shot.tImpact, duration || shot.tImpact + CLIP_AFTER);
+}
+
 export function isHighlight(shot: Shot): boolean {
   return shot.outcome === "unforced_error" || shot.outcome === "forced_error" || shot.outcome === "winner";
 }

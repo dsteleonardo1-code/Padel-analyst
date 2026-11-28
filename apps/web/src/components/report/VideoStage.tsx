@@ -13,6 +13,8 @@ export function VideoStage({
   onTime,
   onPrev,
   onNext,
+  tapLabel,
+  onTap,
 }: {
   match: Match;
   shots: Shot[];
@@ -21,6 +23,8 @@ export function VideoStage({
   onTime?: (time: number) => void;
   onPrev: () => void;
   onNext: () => void;
+  tapLabel?: string | null;
+  onTap?: (point: { x: number; y: number }) => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -67,21 +71,37 @@ export function VideoStage({
   }, [match, shots, playing, videoUrl]);
 
   return (
-    <div id="stage" className="overflow-hidden rounded-3xl border border-white/10 bg-black">
+    <div id="stage" className="relative overflow-hidden rounded-3xl border border-white/10 bg-black">
       {videoUrl ? (
-        <video
-          ref={videoRef}
-          src={videoUrl}
-          controls
-          playsInline
-          preload="metadata"
-          className="aspect-video w-full bg-black"
-          onTimeUpdate={(event) => {
-            const next = event.currentTarget.currentTime;
-            setTime(next);
-            onTimeRef.current?.(next);
-          }}
-        />
+        <>
+          <div className="relative">
+            <video
+              ref={videoRef}
+              src={videoUrl}
+              controls
+              playsInline
+              preload="metadata"
+              className="aspect-video w-full bg-black"
+              onTimeUpdate={(event) => {
+                const next = event.currentTarget.currentTime;
+                setTime(next);
+                onTimeRef.current?.(next);
+              }}
+            />
+            {onTap && (
+              <button
+                type="button"
+                aria-label={tapLabel ?? "Tocca il video"}
+                className="absolute inset-0"
+                onClick={(event) => {
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  onTap({ x: (event.clientX - rect.left) / rect.width, y: (event.clientY - rect.top) / rect.height });
+                }}
+              />
+            )}
+            {tapLabel && <p className="pointer-events-none absolute left-3 top-3 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-lime">{tapLabel}</p>}
+          </div>
+        </>
       ) : (
         <canvas ref={canvasRef} width={640} height={360} className="aspect-video w-full bg-[#10241c]" />
       )}

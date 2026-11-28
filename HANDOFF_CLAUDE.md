@@ -12,6 +12,7 @@ Branch di lavoro: `cursor/fondocampo-padel-tennis-7196`.
 - Segna un colpo parte già su dritto, errore e fondo: un tocco basta, si cambia solo se serve.
 - Scheda: video, timeline dei colpi, segno manuale (tipo, esito, zona, pressione, inizio/fine), totali, indice 0–100 solo con almeno 4 colpi classificati, grafici per tipo, mini-campo per zona, tre priorità con esercizio, clip.
 - Scheda `m-galan-errori`: un errore di Ale Galán visto nei fotogrammi dello spezzone Dailymotion `xa6xfe4` (0:20–2:50). Etichetta **Tag manuale**. Il file `apps/web/public/demo/galan-prova.mp4` è in `.gitignore` e non va committato.
+- Scheda `m-navarro-set`: set 1 intero di Company/Escalante contro Allemandi/Navarro, World Padel Tour Lisboa, Dailymotion `x273mqn`. Paquito Navarro è identificato dalla scritta sulla maglia. Nessun colpo pre-segnato: la camera fissa non mostra il risultato della palla. Il video `lisboa-set.mp4` è in `.gitignore`. Ale Galán non compare nelle partite intere scaricabili da qui (su Dailymotion le sue finali Premier Padel sono highlights).
 - L'indice e le percentuali restano vuoti se i colpi non bastano.
 - Condivisione: link della scheda, oppure immagine PNG (share del telefono, altrimenti download).
 - Anteprima pubblica: server statico sulla porta 8765 e tunnel Cloudflare temporaneo. Non ha garanzia di durata.

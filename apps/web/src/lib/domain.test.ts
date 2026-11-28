@@ -128,7 +128,7 @@ describe("corrections and deltas", () => {
 
   it("keeps example sheets off the profile until saved", () => {
     const data = buildExampleData();
-    const onProfile = new Set(["m-galan", "m-galan-errori"]);
+    const onProfile = new Set(["m-galan", "m-galan-errori", "m-navarro-set"]);
     expect(data.matches.filter((match) => !onProfile.has(match.id)).every((match) => !isOnProfile(match))).toBe(true);
     expect(isOnProfile(data.matches.find((match) => match.id === "m-galan")!)).toBe(true);
     expect(isOnProfile(data.matches.find((match) => match.id === "m-galan-errori")!)).toBe(true);
@@ -141,7 +141,7 @@ describe("corrections and deltas", () => {
     expect(gifted(4, 4).line).toBe("8 errori = 8 punti = 2 game regalati");
     expect(gifted(2, 1).line).toContain("meno di 1 game");
     const data = buildExampleData();
-    for (const match of data.matches.filter((item) => item.id !== "m-galan")) {
+    for (const match of data.matches.filter((item) => item.id !== "m-galan" && item.id !== "m-navarro-set")) {
       const summary = summarize(playerShots(data.shots, match.focusPlayerId, match.id));
       expect(summary.unforced + summary.forced + summary.winners).toBeGreaterThan(0);
       expect(match.example).toBe(true);
@@ -158,6 +158,11 @@ describe("corrections and deltas", () => {
     expect(tagged[0].manuallyCorrected).toBe(true);
     expect(tagged[0].tImpact).toBeCloseTo(90.6);
     expect(gifted(0, 1).line).toBe("1 errore = 1 punto = meno di 1 game regalato");
+    const navarro = data.matches.find((match) => match.id === "m-navarro-set");
+    expect(navarro?.confidenceNote).toContain("colpi segnati a mano");
+    expect(navarro?.limitNote).toContain("x273mqn");
+    expect(playerShots(data.shots, "p-navarro", "m-navarro-set")).toHaveLength(0);
+    expect(matchRating(playerShots(data.shots, "p-navarro", "m-navarro-set"))).toBeNull();
   });
 
   it("colors an error drop as an improvement", () => {

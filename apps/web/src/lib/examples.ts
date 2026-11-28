@@ -1,5 +1,6 @@
 import { buildGalanErrorSheet } from "./galan-errori";
 import { buildGalanSheet } from "./galan";
+import { buildNavarroSet } from "./navarro-set";
 import { uid } from "./format";
 import { EXAMPLE_OBSERVATION } from "./types";
 import type {
@@ -543,10 +544,11 @@ export function buildExampleData(): { players: Player[]; matches: Match[]; ralli
   const built = [luca1, luca2, luca3, marco1, marco2].map(materialize);
   const galan = buildGalanSheet();
   const galanErrori = buildGalanErrorSheet();
+  const navarro = buildNavarroSet();
   return {
-    players: [...examplePlayers, galan.player],
-    matches: [...built.map((item) => item.match), galan.match, galanErrori.match],
-    rallies: [...built.flatMap((item) => item.rallies), ...galan.rallies, ...galanErrori.rallies],
-    shots: [...built.flatMap((item) => item.shots), ...galan.shots, ...galanErrori.shots],
+    players: [...examplePlayers, galan.player, navarro.player],
+    matches: [...built.map((item) => item.match), galan.match, galanErrori.match, navarro.match],
+    rallies: [...built.flatMap((item) => item.rallies), ...galan.rallies, ...galanErrori.rallies, ...navarro.rallies],
+    shots: [...built.flatMap((item) => item.shots), ...galan.shots, ...galanErrori.shots, ...navarro.shots],
   };
 }

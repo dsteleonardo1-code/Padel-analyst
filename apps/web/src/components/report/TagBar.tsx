@@ -40,19 +40,18 @@ export interface Stamp {
 }
 
 export function TagBar({ time, onStamp }: { time: number; onStamp: (stamp: Stamp) => void }) {
-  const [type, setType] = useState<ShotType | null>(null);
+  const [type, setType] = useState<ShotType>("forehand");
   const [wing, setWing] = useState<BodySide | undefined>(undefined);
-  const [outcome, setOutcome] = useState<ShotOutcome | null>(null);
-  const [zone, setZone] = useState<CourtZone | null>(null);
+  const [outcome, setOutcome] = useState<ShotOutcome>("forced_error");
+  const [zone, setZone] = useState<CourtZone>("baseline");
   const [pressured, setPressured] = useState(false);
   const [phase, setPhase] = useState<PointPhase | null>(null);
-  const ready = type != null && outcome != null && zone != null;
 
   return (
     <div className="surface space-y-2 p-3">
       <div className="flex items-baseline justify-between">
         <p className="font-display text-lg font-bold">Segna</p>
-        <p className="font-display text-sm tabular-nums text-lime">{formatTime(time)}</p>
+        <p className="text-[11px] text-mute">Dritto · errore · fondo</p>
       </div>
       <div className="flex gap-2 overflow-x-auto pb-1">
         {TYPES.map((item) => (
@@ -106,11 +105,7 @@ export function TagBar({ time, onStamp }: { time: number; onStamp: (stamp: Stamp
       </div>
       <button
         type="button"
-        disabled={!ready}
-        onClick={() => {
-          if (!type || !outcome || !zone) return;
-          onStamp({ type, outcome, zone, pressured, phase, bodySide: wing });
-        }}
+        onClick={() => onStamp({ type, outcome, zone, pressured, phase, bodySide: wing })}
         className="min-h-12 w-full rounded-full bg-lime text-sm font-bold text-ink disabled:opacity-40"
       >
         Segna {formatTime(time)}

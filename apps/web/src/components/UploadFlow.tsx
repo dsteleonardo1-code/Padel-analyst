@@ -183,29 +183,28 @@ export function UploadFlow() {
     }
   }
 
+  const stepIndex = step === "load" ? 1 : step === "who" ? 2 : 3;
+
   return (
-    <div className="space-y-4 py-4">
+    <div className="space-y-6 py-4">
+      <Steps current={stepIndex} />
       {step === "load" && (
-        <section className="rise space-y-4">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.22em] text-lime">Fondocampo</p>
-            <h1 className="mt-2 font-display text-5xl font-extrabold leading-[0.9]">La scheda del tuo gioco</h1>
-          </div>
-          <div className="surface grid grid-cols-2 gap-1 p-1">
+        <section className="rise space-y-5">
+          <h1 className="font-display text-4xl font-extrabold leading-none">Video</h1>
+          <div className="grid grid-cols-2 gap-2">
             {(["padel", "tennis"] as Sport[]).map((item) => (
               <button
                 key={item}
                 type="button"
                 onClick={() => setSport(item)}
-                className={`press min-h-11 rounded-2xl text-sm font-semibold ${sport === item ? "bg-lime text-ink shadow-glow" : "text-sand"}`}
+                className={`press min-h-12 rounded-2xl text-sm font-semibold ${sport === item ? "bg-lime text-ink" : "bg-white/5 text-sand"}`}
               >
                 {item === "padel" ? "Padel" : "Tennis"}
               </button>
             ))}
           </div>
-          <label className="surface press flex min-h-40 cursor-pointer flex-col items-center justify-center border-lime/30 bg-lime/10 px-4 text-center">
-            <span className="font-display text-3xl font-extrabold">Carica video</span>
-            <span className="mt-1 text-sm text-mute">{file ? file.name : "Resta sul telefono"}</span>
+          <label className="press flex min-h-16 cursor-pointer items-center justify-center rounded-full bg-lime px-4 text-lg font-bold text-ink shadow-glow">
+            Carica video
             <input
               type="file"
               accept="video/*"
@@ -220,20 +219,16 @@ export function UploadFlow() {
               }}
             />
           </label>
-          <button type="button" onClick={openExample} className="surface press flex min-h-20 w-full items-center justify-between px-5 text-left">
-            <span>
-              <span className="block font-display text-2xl font-bold">Prova con l'esempio</span>
-              <span className="text-sm text-mute">Video gratuito, segnato ESEMPIO</span>
-            </span>
-            <span className="grid h-10 w-10 place-items-center rounded-full bg-lime text-lg font-bold text-ink">→</span>
+          <button type="button" onClick={openExample} className="press min-h-12 w-full text-sm font-semibold text-lime">
+            Prova con l'esempio
           </button>
         </section>
       )}
 
       {step === "who" && (
-        <section>
+        <section className="rise space-y-4">
           <h1 className="font-display text-4xl font-extrabold leading-none">Giocatore</h1>
-          <p className="mt-1 text-sm text-mute">Tocca in campo, o scrivi maglia e lato.</p>
+          <p className="text-sm text-mute">Tocca chi vuoi seguire.</p>
           <div className="relative mt-3 overflow-hidden rounded-[2rem] bg-black">
             <canvas
               ref={canvasRef}
@@ -263,18 +258,19 @@ export function UploadFlow() {
               className="w-full rounded-2xl border border-white/10 bg-ink/60 px-3 py-2 text-base text-sand"
             />
           </label>
-          <div className="mt-3 flex gap-2">
-            <Button type="button" variant="ghost" onClick={() => setStep("load")}>Indietro</Button>
-            <Button type="button" disabled={!hint && cue.trim().length < 3} onClick={createSheet}>Crea la scheda</Button>
-          </div>
+          <Button type="button" className="min-h-16 w-full text-lg" disabled={!hint && cue.trim().length < 3} onClick={createSheet}>
+            Crea la scheda
+          </Button>
+          <button type="button" className="min-h-11 w-full text-sm text-mute" onClick={() => setStep("load")}>Indietro</button>
         </section>
       )}
 
       {step === "run" && (
-        <section>
-          <h1 className="font-display text-3xl font-bold">Scheda in corso</h1>
-          <div className="mt-4 h-3 overflow-hidden rounded-full bg-white/10">
-            <div className="h-3 rounded-full bg-lime transition-all" style={{ width: `${progress}%` }} />
+        <section className="rise space-y-4">
+          <h1 className="font-display text-4xl font-extrabold leading-none">Scheda</h1>
+          <p className="font-display text-6xl font-extrabold text-lime">{progress}%</p>
+          <div className="h-3 overflow-hidden rounded-full bg-white/10">
+            <div className="h-3 rounded-full bg-lime transition-all duration-300" style={{ width: `${progress}%` }} />
           </div>
         </section>
       )}
@@ -282,5 +278,22 @@ export function UploadFlow() {
       {error && <p className="text-sm text-coral">{error}</p>}
       <video ref={videoRef} playsInline muted preload="auto" className="pointer-events-none fixed left-0 top-0 -z-10 h-32 w-32 opacity-0" />
     </div>
+  );
+}
+
+function Steps({ current }: { current: 1 | 2 | 3 }) {
+  return (
+    <ol className="grid grid-cols-3 gap-2">
+      {["Video", "Giocatore", "Scheda"].map((label, index) => {
+        const number = index + 1;
+        const on = number === current;
+        return (
+          <li key={label} className={`rounded-2xl px-2 py-3 text-center ${on ? "bg-lime text-ink" : "bg-white/5 text-mute"}`}>
+            <span className="block font-display text-lg font-extrabold leading-none">{number}</span>
+            <span className="mt-1 block text-[11px] font-semibold">{label}</span>
+          </li>
+        );
+      })}
+    </ol>
   );
 }

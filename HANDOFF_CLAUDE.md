@@ -6,8 +6,10 @@ Branch di lavoro: `cursor/fondocampo-padel-tennis-7196`.
 
 ## Stato
 
-- Barra: Home, Analizza, Profilo. Giocatori e Confronta restano raggiungibili dalla home.
-- Analizza un video è l'unico ingresso: carica oppure esempio, poi il giocatore, poi la scheda.
+- Barra: Home, Analizza, Profilo. Giocatori e Confronta restano i link sotto le schede.
+- Home: illustrazione del campo e un solo pulsante, Analizza un video. Al primo uso compare una riga: il video resta sul telefono.
+- Analizza è un wizard: 1 Video (carica o esempio), 2 Giocatore, 3 Scheda.
+- Segna un colpo parte già su dritto, errore e fondo: un tocco basta, si cambia solo se serve.
 - Scheda: video, timeline dei colpi, segno manuale (tipo, esito, zona, pressione, inizio/fine), totali, indice 0–100 solo con almeno 4 colpi classificati, grafici per tipo, mini-campo per zona, tre priorità con esercizio, clip.
 - Scheda `m-galan-errori`: un errore di Ale Galán visto nei fotogrammi dello spezzone Dailymotion `xa6xfe4` (0:20–2:50). Etichetta **Tag manuale**. Il file `apps/web/public/demo/galan-prova.mp4` è in `.gitignore` e non va committato.
 - L'indice e le percentuali restano vuoti se i colpi non bastano.
@@ -48,6 +50,7 @@ La pipeline Python (`apps/api`, `docker compose`) è opzionale. Non serve per la
 - `apps/web/src/lib/examples.ts` — schede ESEMPIO.
 - `apps/web/src/lib/galan-errori.ts` — il colpo segnato a mano.
 - `apps/web/src/lib/stats.ts` — totali e game regalati.
+- `apps/web/public/hero-padel.jpg` — illustrazione della home.
 - `apps/web/public/demo` — video di prova. `galan-prova.mp4` non è nel git.
 
 ## Prossimi passi

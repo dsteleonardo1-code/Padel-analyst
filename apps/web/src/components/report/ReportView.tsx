@@ -159,22 +159,28 @@ export function ReportView({
           }}
         />
       )}
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="font-display text-4xl font-extrabold leading-none tracking-tight">{player?.name ?? "Giocatore"}</h1>
-          <p className="mt-1 text-sm text-mute">{match.score || sportLabel[match.sport]}</p>
-          <p className="mt-2 text-sm">
-            <span className="font-display text-3xl font-extrabold text-lime">{rating ? rating.score : "—"}</span>
-            <span className="ml-2 text-mute">{rating ? rating.line : "Indice dopo 4 colpi classificati."}</span>
-          </p>
-          {match.limitNote && <p className="mt-2 text-xs leading-relaxed text-mute">{match.limitNote}</p>}
-          {match.source !== "example" && <p className="mt-1 text-xs text-clay">{match.confidenceNote}</p>}
+      <section className="share-card rise space-y-4 p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="font-display text-4xl font-extrabold leading-none tracking-tight">{player?.name ?? "Giocatore"}</h1>
+            <p className="mt-2 text-sm text-mute">{match.score || sportLabel[match.sport]}</p>
+          </div>
+          <div className="text-right">
+            <p className="font-display text-5xl font-extrabold leading-none text-lime">{rating ? rating.score : "—"}</p>
+            <SourceMark source={match.source} example={match.example} hand={match.confidenceNote.includes("colpi segnati a mano")} />
+          </div>
         </div>
-        <SourceMark source={match.source} example={match.example} hand={match.confidenceNote.includes("colpi segnati a mano")} />
-      </header>
+        <ScoreTrio unforced={summary.unforced} forced={summary.forced} winners={summary.winners} />
+        <p className="text-center text-xs text-mute">{rating ? rating.line : "Indice dopo 4 colpi classificati."}</p>
+        {(match.limitNote || match.confidenceNote) && (
+          <details className="text-xs text-mute">
+            <summary className="min-h-11 cursor-pointer text-lime">Fonte</summary>
+            {match.confidenceNote && <p className="mt-1 text-clay">{match.confidenceNote}</p>}
+            {match.limitNote && <p className="mt-1 leading-relaxed">{match.limitNote}</p>}
+          </details>
+        )}
+      </section>
       {notice && <Banner tone="sand">{notice}</Banner>}
-
-      <ScoreTrio unforced={summary.unforced} forced={summary.forced} winners={summary.winners} />
       <AnalystBoard
         match={match}
         shots={mine}
